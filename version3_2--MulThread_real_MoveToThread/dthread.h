@@ -17,6 +17,7 @@ public:
     DThread(int );
     Download * download;
     void SetInitValue(QUrl _url,QFile *_file,qint64 startPoint,qint64 endPoint,QMutex *);
+    ~DThread();
 
 private:
     int ID;

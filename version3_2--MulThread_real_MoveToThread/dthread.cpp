@@ -8,6 +8,10 @@ DThread::DThread(int _ID)
     download = NULL;
 
 }
+DThread::~DThread(){
+    delete download;
+}
+
 void DThread::SetInitValue(QUrl _url,
                            QFile *_file,
                            qint64 _startPoint,
@@ -43,8 +47,8 @@ void DThread::run(){
 
     while(!tag){
         QCoreApplication::processEvents();
-
     }
+
     //qDebug()<<"Thread "<<ID<<"Tag changed !";
 
     //connect(download,SIGNAL(Finished_Thread()),&loop,SLOT(exit()));

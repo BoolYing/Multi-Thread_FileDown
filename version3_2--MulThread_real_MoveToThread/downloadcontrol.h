@@ -70,7 +70,7 @@ private:
 
 
 signals:
-    void FileDownloadFinished();
+    void FileDownloadFinished(QString saveFile);
     void  getPair(pair_2int64 & pair,int i);
 
 

@@ -126,7 +126,7 @@ void DownloadControl::DownloadFile(QUrl url, QString saveFile, int ThreadNum)
 }
 //一个线程下载任务完结的时候，会发送这个信号到 下载控制器，通知自己即将结束。。
 void DownloadControl::PrintThreadEnd(){
-    qDebug()<<"DownloadControl::Print_ThreadEnd()-->Thread is end.";
+    //qDebug()<<"DownloadControl::Print_ThreadEnd()-->Thread is end.";
 }
 
 
@@ -185,7 +185,7 @@ void DownloadControl::SubPartFinished()
         file->close();
         timer->stop();
         qDebug() << "DownloadControl::SubPartFinished()--> Download finished";
-        emit FileDownloadFinished();
+        emit FileDownloadFinished(saveFile);
         //delete this;
     }
 }

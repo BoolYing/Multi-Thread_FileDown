@@ -48,9 +48,6 @@ void Download::StartDownload( QUrl url,
     mutex      = _mutex;
     leftSize   = endBytes - startBytes;
 
-
-    //file->seek(startBytes);
-    //timer.start(500); //每1000ms更新一次当前速度与剩余文件大小
     //根据HTTP协议，写入RANGE头部，说明请求文件的范围
     manager = new QNetworkAccessManager();
     QNetworkRequest qheader;
