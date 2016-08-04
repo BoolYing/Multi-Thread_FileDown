@@ -33,6 +33,8 @@ private slots:
     void on_pushButton_clicked();
      void TaskFinished();
 
+     void on_pushButton_2_clicked();
+
 private:
     Ui::MainWindow *ui;
     DownloadControl *dow;

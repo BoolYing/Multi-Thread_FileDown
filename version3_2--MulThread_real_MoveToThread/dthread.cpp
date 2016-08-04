@@ -12,24 +12,17 @@ void DThread::SetInitValue(QUrl _url,
                            QFile *_file,
                            qint64 _startPoint,
                            qint64 _endPoint,
-                           QTimer *_timer,
                            QMutex *_mutex){
     url =_url;
     file = _file;
     startPoint = _startPoint;
     endPoint = _endPoint;
-    timer = _timer;
     mutex = _mutex;
     tag = false;
 
-
-
     download = new Download(ID);
 
-
     //qDebug()<<"Thread "<<ID <<" Task Domaining";
-
-
 }
 void DThread::changeTag(){
     tag = true;
@@ -50,7 +43,9 @@ void DThread::run(){
 
     while(!tag){
         QCoreApplication::processEvents();
+
     }
+    //qDebug()<<"Thread "<<ID<<"Tag changed !";
 
     //connect(download,SIGNAL(Finished_Thread()),&loop,SLOT(exit()));
     //connect(this,SIGNAL(finished()),&loop,SLOT(quit()));

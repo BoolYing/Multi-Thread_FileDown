@@ -99,10 +99,11 @@ void Download::sendSpeed_leftSize(pair_2int64 &_pair,int i){
 
 void Download::httpFinished(){
     file->flush();
+    speed = leftSize = 0;
     reply->deleteLater();
     reply = 0;
     file = 0;
-   // timer.stop();
+    timer->stop();
     qDebug() << "httpFinished()--> " <<Thread_ID<< " download finished";
 
     emit Finished_Thread();

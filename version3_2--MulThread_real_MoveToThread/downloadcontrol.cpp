@@ -1,4 +1,3 @@
-
 #include"downloadcontrol.h"
 
 //暂时没有传MainWindow的指针，还没有做同步界面进度的功能。
@@ -55,6 +54,7 @@ void DownloadControl::DownloadFile(QUrl url, QString saveFile, int ThreadNum)
     if(totalSize == -1)
     {
        // return false;
+        qDebug()<<"totalSize == -1";
         return ;
     }
     file = new QFile(saveFile,this);
@@ -88,7 +88,7 @@ void DownloadControl::DownloadFile(QUrl url, QString saveFile, int ThreadNum)
          qint64 endPoint = totalSize * (i + 1) / ThreadNum;
 
          DThread * thread = new DThread(i);
-         thread->SetInitValue(url,file,startPoint,endPoint,timer,mutex);
+         thread->SetInitValue(url,file,startPoint,endPoint,mutex);
          threads.append(thread);
 
          thread->start();

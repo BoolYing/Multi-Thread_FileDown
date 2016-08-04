@@ -33,12 +33,16 @@ void MainWindow::on_pushButton_clicked()
     QString fileName(info.fileName());
      //qDebug()<<"MainWindow -->filename: "<<fileName;
     dow = new DownloadControl();
-    dow->DownloadFile(url,fileName,20);
+    dow->DownloadFile(url,fileName,6);
     connect(dow,SIGNAL(FileDownloadFinished()),this,SLOT(TaskFinished()));
-
 }
 
 void MainWindow::TaskFinished(){
     qDebug()<<"The Task Finished !!!!!";
 }
 
+
+void MainWindow::on_pushButton_2_clicked()
+{
+
+}
