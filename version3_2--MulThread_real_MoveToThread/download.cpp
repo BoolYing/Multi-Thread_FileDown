@@ -109,10 +109,12 @@ void Download::httpFinished(){
 void Download::httpReadyRead(){
     if ( !file )
         return;
+
      buffer = reply->readAll();
      /****************************/
 
      mutex->lock();
+
      file->seek(startBytes+newSize);
      file->write(buffer);
      mutex->unlock();

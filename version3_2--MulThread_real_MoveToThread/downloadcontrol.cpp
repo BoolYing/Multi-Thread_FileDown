@@ -2,7 +2,7 @@
 
 //暂时没有传MainWindow的指针，还没有做同步界面进度的功能。
 //DownloadControl::DownloadControl(MainWindow * _window, QObject * parent = 0):window(_window),QObject(parent)
-DownloadControl::DownloadControl()
+DownloadControl::DownloadControl(int _TASK_ID)
 {
    //manager = new QNetworkAccessManager(this);
     Thread_Finished_Num = 0;
@@ -11,8 +11,9 @@ DownloadControl::DownloadControl()
     state = Waiting;
     file = NULL;
     mutex = new QMutex;
+    //初始化当前下载管理器的任务编号.
+    TASK_ID = _TASK_ID;
 
-   // qDebug()<<"DownloadControl : created.";
 }
 
 DownloadControl::~DownloadControl(){
@@ -35,6 +36,8 @@ QString DownloadControl::errorString()
 
 void DownloadControl::DownloadFile(QUrl url, QString saveFile, int ThreadNum)
 {
+    //标志当前状态。
+    //if(state == )
     if(file != NULL)
     {
         errorInfo = "unknow error";
@@ -161,8 +164,9 @@ void DownloadControl::NetSpeed(){
     qDebug()<<"speed = "<<str1<<"  time  =" <<str2;
 
     //每一个任务都有一个相对应的进度栏，包括进度条，文件名，下载速度，剩余时间等。
-    //这个函数用来更新任务对应的进度栏。
-    updateUI(str1,str2);
+    //这个信号用来更新任务对应的进度栏。
+    emit send_Ui_Msg(TASK_ID,saveFile,totalSize-leftSize,totalSize,str1,str2);
+
 
 }
 
@@ -186,6 +190,9 @@ void DownloadControl::SubPartFinished()
         timer->stop();
         qDebug() << "DownloadControl::SubPartFinished()--> Download finished";
         emit FileDownloadFinished(saveFile);
+        QString str1("");
+        QString str2("下载完成");
+        emit send_Ui_Msg(TASK_ID,saveFile,totalSize,totalSize,str1,str2);
         //delete this;
     }
 }
@@ -224,6 +231,6 @@ qint64 DownloadControl::GetFileSize(QUrl url,int tryTimes)
     return size;
 }
 void DownloadControl::updateUI(QString str1, QString str2){
-
+   // emit send_Ui_Msg(TASK_ID,qint64,qint64,QString,QString);
 }
 

@@ -20,12 +20,14 @@
 #include<QPair>
 #include<QHBoxLayout>
 #include<QVBoxLayout>
+#include<QSpacerItem>
 
 
 namespace Ui {
 class MainWindow;
 }
 
+//每一个正在下载的任务都有一个对应的下载状态栏，包含ProgressBar、lable、button.
 struct ProgressTools{
 public:
     ProgressTools();
@@ -38,6 +40,7 @@ public:
     QPushButton *stopDownload;
     QHBoxLayout * layout;
  };
+//使用pair将一个下载任务的 下载控制器 与 下载状态栏 的对象的指针包装，并存到任务列表中。
 typedef  QPair<DownloadControl*,ProgressTools *> taskPair;
 
 
@@ -51,19 +54,28 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+    //任务列表，保存下载任务的状态。
+    QVector<taskPair> task;
+
 private slots:
     void on_pushButton_clicked();
      void TaskFinished(QString);
 
      void on_pushButton_2_clicked();
+     void upDateUI(int,QString,qint64,qint64,QString,QString);
 
 private:
     Ui::MainWindow *ui;
     DownloadControl *dow;
+
+    //临时保存一个任务信息的pair。
     taskPair  pair;
-    //用来保存下载
-    QVector<taskPair> task;
+
     QTimer * timer;
+    QVBoxLayout *downloading_layout;
+    QVBoxLayout *Finished_layout;
+    QVBoxLayout *Trash_layout;
+    int Task_ID;
 
 };
 

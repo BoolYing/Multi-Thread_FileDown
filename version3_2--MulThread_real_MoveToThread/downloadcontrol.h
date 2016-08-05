@@ -26,7 +26,7 @@ public:
     enum State{Waiting,Downloading,Pause,Stop,Finished};
 
     //DownloadControl(MainWindow * _window,QObject * parent);
-     DownloadControl();
+     DownloadControl(int );
      ~DownloadControl();
 
      //开始下载
@@ -67,11 +67,13 @@ private:
     QVector<DThread*> threads;
     QString errorInfo;
     QMutex *mutex;
+    int TASK_ID;
 
 
 signals:
     void FileDownloadFinished(QString saveFile);
     void  getPair(pair_2int64 & pair,int i);
+    void send_Ui_Msg(int,QString,qint64,qint64,QString,QString);
 
 
 private slots:
