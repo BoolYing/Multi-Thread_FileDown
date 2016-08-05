@@ -1,0 +1,52 @@
+﻿生成启动时间为 2016/8/5 8:49:17。
+     1>项目“C:\Users\by\Desktop\FileDow\version3.2--MulThread_real_MoveToThread\version3_2--MulThread_real_MoveToThread\version3_2--MulThread_real_MoveToThread.vcxproj”在节点 2 上(Build 个目标)。
+     1>CustomBuild:
+         Moc'ing download.h...
+         Moc'ing downloadcontrol.h...
+         Moc'ing dthread.h...
+         Moc'ing mainwindow.h...
+         Uic'ing mainwindow.ui...
+       ClCompile:
+         D:\VS2013\VC\bin\x86_amd64\CL.exe /c /I. /IC:\Qt\Qt5.5.0\5.5\msvc2013_64\include /IC:\Qt\Qt5.5.0\5.5\msvc2013_64\include\QtWidgets /IC:\Qt\Qt5.5.0\5.5\msvc2013_64\include\QtGui /IC:\Qt\Qt5.5.0\5.5\msvc2013_64\include\QtANGLE /IC:\Qt\Qt5.5.0\5.5\msvc2013_64\include\QtNetwork /IC:\Qt\Qt5.5.0\5.5\msvc2013_64\include\QtCore /Idebug /I. /I"C:\Qt\Qt5.5.0\5.5\msvc2013_64\mkspecs\win32-msvc2013" /I.\GeneratedFiles /Zi /nologo /W3 /WX- /Od /D _WINDOWS /D UNICODE /D WIN32 /D WIN64 /D QT_WIDGETS_LIB /D QT_GUI_LIB /D QT_NETWORK_LIB /D QT_CORE_LIB /Gm- /EHsc /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /GR /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt -w34100 -w34189 -w44996 Debug\moc_download.cpp Debug\moc_downloadcontrol.cpp Debug\moc_dthread.cpp Debug\moc_mainwindow.cpp download.cpp downloadcontrol.cpp dthread.cpp main.cpp mainwindow.cpp
+         moc_download.cpp
+     1>c:\users\by\desktop\filedow\version3.2--multhread_real_movetothread\version3_2--multhread_real_movetothread\debug\../download.h : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+         moc_downloadcontrol.cpp
+     1>c:\users\by\desktop\filedow\version3.2--multhread_real_movetothread\version3_2--multhread_real_movetothread\debug\../downloadcontrol.h : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+     1>C:\Users\by\Desktop\FileDow\version3.2--MulThread_real_MoveToThread\version3_2--MulThread_real_MoveToThread\download.h : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+         moc_dthread.cpp
+     1>C:\Users\by\Desktop\FileDow\version3.2--MulThread_real_MoveToThread\version3_2--MulThread_real_MoveToThread\download.h : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+         moc_mainwindow.cpp
+     1>c:\users\by\desktop\filedow\version3.2--multhread_real_movetothread\version3_2--multhread_real_movetothread\downloadcontrol.h : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+     1>C:\Users\by\Desktop\FileDow\version3.2--MulThread_real_MoveToThread\version3_2--MulThread_real_MoveToThread\download.h : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+         download.cpp
+     1>download.cpp : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+     1>C:\Users\by\Desktop\FileDow\version3.2--MulThread_real_MoveToThread\version3_2--MulThread_real_MoveToThread\download.h : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+         downloadcontrol.cpp
+     1>downloadcontrol.cpp : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+     1>c:\users\by\desktop\filedow\version3.2--multhread_real_movetothread\version3_2--multhread_real_movetothread\downloadcontrol.h : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+     1>C:\Users\by\Desktop\FileDow\version3.2--MulThread_real_MoveToThread\version3_2--MulThread_real_MoveToThread\download.h : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+         dthread.cpp
+     1>C:\Users\by\Desktop\FileDow\version3.2--MulThread_real_MoveToThread\version3_2--MulThread_real_MoveToThread\download.h : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+         main.cpp
+     1>c:\users\by\desktop\filedow\version3.2--multhread_real_movetothread\version3_2--multhread_real_movetothread\downloadcontrol.h : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+     1>C:\Users\by\Desktop\FileDow\version3.2--MulThread_real_MoveToThread\version3_2--MulThread_real_MoveToThread\download.h : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+         mainwindow.cpp
+     1>c:\users\by\desktop\filedow\version3.2--multhread_real_movetothread\version3_2--multhread_real_movetothread\downloadcontrol.h : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+     1>C:\Users\by\Desktop\FileDow\version3.2--MulThread_real_MoveToThread\version3_2--MulThread_real_MoveToThread\download.h : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+         正在生成代码...
+       Link:
+         D:\VS2013\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"debug\\version3_2--MulThread_real_MoveToThread.exe" /NOLOGO /LIBPATH:C:\Qt\Qt5.5.0\5.5\msvc2013_64\lib /LIBPATH:C:/qt/qt5.5.0/5.5/msvc2013_64/lib /LIBPATH:C:\Qt\Qt5.5.0\5.5\msvc2013_64\lib C:\Qt\Qt5.5.0\5.5\msvc2013_64\lib\qtmaind.lib shell32.lib C:/qt/qt5.5.0/5.5/msvc2013_64/lib\Qt5Cored.lib C:\Qt\Qt5.5.0\5.5\msvc2013_64\lib\Qt5Widgetsd.lib C:\Qt\Qt5.5.0\5.5\msvc2013_64\lib\Qt5Guid.lib C:\Qt\Qt5.5.0\5.5\msvc2013_64\lib\Qt5Networkd.lib C:\Qt\Qt5.5.0\5.5\msvc2013_64\lib\Qt5Cored.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"debug\version3_2--MulThread_real_MoveToThread.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /MACHINE:X64 "/MANIFESTDEPENDENCY:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' publicKeyToken='6595b64144ccf1df' language='*' processorArchitecture='*'" x64\Debug\moc_download.obj
+         x64\Debug\moc_downloadcontrol.obj
+         x64\Debug\moc_dthread.obj
+         x64\Debug\moc_mainwindow.obj
+         x64\Debug\download.obj
+         x64\Debug\downloadcontrol.obj
+         x64\Debug\dthread.obj
+         x64\Debug\main.obj
+         x64\Debug\mainwindow.obj
+         version3_2--MulThread_real_MoveToThread.vcxproj -> C:\Users\by\Desktop\FileDow\version3.2--MulThread_real_MoveToThread\version3_2--MulThread_real_MoveToThread\debug\version3_2--MulThread_real_MoveToThread.exe
+     1>已完成生成项目“C:\Users\by\Desktop\FileDow\version3.2--MulThread_real_MoveToThread\version3_2--MulThread_real_MoveToThread\version3_2--MulThread_real_MoveToThread.vcxproj”(Build 个目标)的操作。
+
+生成成功。
+
+已用时间 00:00:10.27
