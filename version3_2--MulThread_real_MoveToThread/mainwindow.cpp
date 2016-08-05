@@ -8,6 +8,8 @@
 #include<QUrl>
 #include<QFileInfo>
 #include<QMessageBox>
+#include<QSpacerItem>
+#include<QBoxLayout>
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -28,8 +30,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->tab_2->setLayout(Finished_layout);
     ui->tab_3->setLayout(Trash_layout);
 
-    download_space = new QSpacerItem(30,30);
-    downloading_layout->addSpacerItem(download_space);
+   // download_space = new QSpacerItem(20,20);
+   // downloading_layout->addSpacerItem(download_space);
 
 }
 
@@ -51,6 +53,7 @@ MainWindow::~MainWindow()
     {
         if(task_finish[i]){
             delete task_finish[i];
+            task_finish[i] = NULL;
         }
     }
     delete downloading_layout;
@@ -67,7 +70,7 @@ ProgressTools::ProgressTools(){
     speed = new QLabel;
     lefttime = new QLabel;
     pauseDownload = new QPushButton;
-    pauseDownload->setText("暂停");
+    pauseDownload->setText("暂停下载");
     stopDownload = new QPushButton;
     stopDownload->setText("停止");
 
@@ -108,7 +111,29 @@ FinishedTools::FinishedTools(){
     layout.addWidget(&totalSize);
     layout.addWidget(&LookInDir);
     layout.addWidget(&delFile);
+    connect(&(this->LookInDir),SIGNAL(clicked(bool)),this,SLOT(LookFileInDir()));
 
+    connect(&(this->delFile),SIGNAL(clicked(bool)),this,SLOT(RemoveFiles()));
+
+}
+void FinishedTools::LookFileInDir(){
+    QString fulpath;
+    fulpath = this->path +"/"+ this->filename.text();
+    QFileInfo fi(fulpath);
+    if(!fi.isFile()){
+        QMessageBox msgBox;
+        msgBox.setText("The file has been deleted.");
+        msgBox.exec();
+    }
+
+    else{
+        QDesktopServices::openUrl(QUrl(this->path, QUrl::TolerantMode));
+    }
+}
+void FinishedTools::RemoveFiles(){
+    QString fulpath;
+    fulpath = this->path +"/"+ this->filename.text();
+     QFile::remove(fulpath);//刪除文件
 }
 
 //新建下载任务
@@ -158,16 +183,19 @@ void MainWindow::TaskFinished(QString _filename,int _task_id,qint64 _totalSize,Q
 
     hideAll(_task_id);
 
+    ui->tab_2->show();
     FinishedTools *tools = new FinishedTools;
     task_finish.append(tools);
-    tools->filename.setText(_filename);
-    tools->totalSize.setText(QString::number(_totalSize));
+    tools->filename.setText( _filename  );
+    tools->totalSize.setText(QString::number(_totalSize/1024)+ QString("Kb"));
     tools->path = _path;
     tools->LookInDir.setText("在目录中查看");
-    tools->delFile.setText("删除");
-    connect(&(tools->LookInDir),SIGNAL(clicked(bool)),this,SLOT(LookFileInDir()));
+    tools->delFile.setText("删除任务文件");
+    //connect(&(tools->LookInDir),SIGNAL(clicked(bool)),this,SLOT(LookFileInDir()));
+
     qDebug()<<"file path  :"<<_path;
     Finished_layout->addLayout(&(tools->layout));
+    qDebug()<<"Finished_layout->addLayout(&(tools->layout)) ok !";
 
 
 
@@ -198,15 +226,7 @@ void MainWindow::hideAll(int id){
 
 }
 
-void MainWindow::LookFileInDir(){
-    //QDesktopServices::openUrl(QUrl(filePath, QUrl::TolerantMode));
-}
 
-
-//暂停下载
-void MainWindow::on_pushButton_2_clicked()
-{
-}
 
 
 

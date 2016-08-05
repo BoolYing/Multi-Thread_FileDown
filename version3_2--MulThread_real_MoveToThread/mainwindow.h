@@ -30,7 +30,7 @@ class MainWindow;
 }
 
 //每一个正在下载的任务都有一个对应的下载状态栏，包含ProgressBar、lable、button.
-struct ProgressTools{
+struct ProgressTools {
 public:
     ProgressTools();
     ~ProgressTools();
@@ -47,14 +47,21 @@ public:
 //使用pair将一个下载任务的 下载控制器 与 下载状态栏 的对象的指针包装，并存到任务列表中。
 typedef  QPair<DownloadControl*,ProgressTools *> taskPair;
 
-struct FinishedTools{
-    FinishedTools();
+class FinishedTools:public QObject{
+
+     Q_OBJECT
+public:
+
+   FinishedTools();
    QHBoxLayout layout;
    QLabel filename;
    QLabel totalSize;
    QString path;
    QPushButton LookInDir;
-   QPushButton delFile;
+   QPushButton delFile; 
+public slots:
+   void LookFileInDir();
+   void RemoveFiles();
 };
 
 
@@ -71,8 +78,9 @@ public:
 
     //任务列表，保存下载任务的状态。
     QVector<taskPair> task;
-    QVector<FinishedTools*> task_finish;
+
     //保存完成任务的列表
+    QVector<FinishedTools*> task_finish;
 
     //垃圾箱列表
 
@@ -80,9 +88,8 @@ private slots:
     void on_pushButton_clicked();
      void TaskFinished(QString,int,qint64,QString);
 
-     void on_pushButton_2_clicked();
      void upDateUI(int,QString,qint64,qint64,QString,QString);
-     void LookFileInDir();
+
 
 private:
     Ui::MainWindow *ui;
