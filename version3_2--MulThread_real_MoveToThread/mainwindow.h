@@ -59,7 +59,7 @@ public:
 
 private slots:
     void on_pushButton_clicked();
-     void TaskFinished(QString);
+     void TaskFinished(QString,int);
 
      void on_pushButton_2_clicked();
      void upDateUI(int,QString,qint64,qint64,QString,QString);
@@ -76,6 +76,7 @@ private:
     QVBoxLayout *Finished_layout;
     QVBoxLayout *Trash_layout;
     int Task_ID;
+    QSpacerItem *download_space;
 
 };
 

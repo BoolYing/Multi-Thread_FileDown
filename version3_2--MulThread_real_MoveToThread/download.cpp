@@ -16,14 +16,14 @@ Download::Download(int _ID)
   //  qDebug()<<"download part :"<<Thread_ID <<"created.";
 
 }
-Download::~Download(){
+Download::~Download()
+{
     if(manager){
     delete manager;
     }
     if(timer){
         delete timer;
     }
-
 }
 
 void Download::StartDownload( QUrl url,
@@ -66,9 +66,6 @@ void Download::StartDownload( QUrl url,
 
     connect(timer,SIGNAL(timeout()),this,SLOT(updateSpeed()));
 
-    //connect(reply,SIGNAL(error(QNetworkReply::NetworkError)),SLOT(errorSlot(QNetworkReply::NetworkError)));
-    //connect(this,SIGNAL(httpFinished()),this,SLOT());
-
 
     // qDebug() << "Download -->Thread " <<Thread_ID << " StartDownload().";
 }
@@ -77,9 +74,6 @@ void Download::StartDownload( QUrl url,
 void Download:: updateSpeed(){
     speed = newSize - oldSize;
     oldSize = newSize;
-    //pair.first = speed;
-    //pair.second = leftSize;
-    //emit getSpeed_leftSize(pair);
 }
 
 void Download::sendSpeed_leftSize(pair_2int64 &_pair,int i){
@@ -101,7 +95,7 @@ void Download::httpFinished(){
     reply = 0;
     file = 0;
     timer->stop();
-    qDebug() << "httpFinished()--> " <<Thread_ID<< " download finished";
+    qDebug() << "httpFinished()--> Thread :" <<Thread_ID<< " download finished";
 
     emit Finished_Thread();
 }

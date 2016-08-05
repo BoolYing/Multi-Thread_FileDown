@@ -41,12 +41,6 @@ public:
     //用来获取错误信息。
     QString errorString();
 
-    //每一个任务都有一个相对应的进度栏，包括进度条，文件名，下载速度，剩余时间等。
-    //这个函数用来更新任务对应的进度栏。
-    void updateUI(QString,QString);
-
-
-
     pair_2int64 pair;
 
 
@@ -71,39 +65,28 @@ private:
 
 
 signals:
-    void FileDownloadFinished(QString saveFile);
+    //下载完成会发送这个信号，将任务从正在下载界面，挪到下载完成界面。
+    void FileDownloadFinished(QString saveFile,int TASK_ID);
+
+    //这个信号每秒发送，去请求获得每一个线程的数据。
     void  getPair(pair_2int64 & pair,int i);
+
+    //每一个任务都有一个相对应的进度栏，包括进度条，文件名，下载速度，剩余时间等。
+    //这个信号用来传递参数去更新状态栏。
     void send_Ui_Msg(int,QString,qint64,qint64,QString,QString);
 
 
 private slots:
     //有线程完成下载的时候，这个槽函数被调用，当所有线程都完成下载任务，则发送下载完成信号。
      void SubPartFinished();
+     //每秒统计当前下载速度，与剩余时间的槽函数。
      void NetSpeed();
-
      //一个线程下载任务完结的时候，会发送这个信号到 下载控制器，通知自己即将结束。。
      void PrintThreadEnd();
 
 
 
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

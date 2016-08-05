@@ -16,6 +16,7 @@ class DThread:public QThread
 public:
     DThread(int );
     Download * download;
+    //设置下载链接与范围
     void SetInitValue(QUrl _url,QFile *_file,qint64 startPoint,qint64 endPoint,QMutex *);
     ~DThread();
 
@@ -30,6 +31,7 @@ private:
     //QNetworkAccessManager * manager;
 
 private slots:
+     //改变标记值tag为true，结束死循环。
      void changeTag();
 
 

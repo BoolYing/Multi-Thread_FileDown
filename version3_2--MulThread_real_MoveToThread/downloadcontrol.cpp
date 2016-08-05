@@ -78,7 +78,9 @@ void DownloadControl::DownloadFile(QUrl url, QString saveFile, int ThreadNum)
      timer = new QTimer(this);
      timer->start(1000);
 
+      //这个定时器只需要定时发送信号，让槽函数统计每一个线程的下载进度。应该只对NetSpeed()负责。
      connect(timer,SIGNAL(timeout()),this,SLOT(NetSpeed()));
+     //暂时未开启网络故障检测功能。
      //timer_15s = new QTimer(this);
      //timer_15s->start(15000);
 
@@ -95,36 +97,28 @@ void DownloadControl::DownloadFile(QUrl url, QString saveFile, int ThreadNum)
          threads.append(thread);
 
          thread->start();
-         //qDebug()<<"start finished";
-
 
         //qDebug()<<"thread :"<<thread<<"  thread->download :"<<thread->download;
 
-        connect(this,SIGNAL(getPair(pair_2int64&,int)),thread->download,
+         //主线程通过信号将引用类型的参数传递到对应的从线程，从线程通过改变这个引用类型的参数，来达到跨线程发送接收数据。
+         connect(this,SIGNAL(getPair(pair_2int64&,int)),thread->download,
                 SLOT(sendSpeed_leftSize(pair_2int64&,int)));
 
-         connect(thread,SIGNAL(finished()),this,SLOT(PrintThreadEnd()));
-         //connect(thread,SIGNAL(finished()),this,SLOT(SubPartFinished()));
+         //下载任务完成，发送信号到主线程的槽函数。
          connect(thread->download,SIGNAL(Finished_Thread()),this,SLOT(SubPartFinished()));
 
-         //突然觉得这里的定时器，貌似并不用去更新线程的下载任务的速度，这会让这个定时器担负的功能太多。
-         //这个定时器只需要定时发送信号，让槽函数统计每一个线程的下载进度。应该只对NetSpeed()负责。
-
-
-
          //应该在每一个线程内部，都设置一个定时器，独立的更新自己的数据，并且应该实时的更新自己已经下载的字节大小。
-         //这里有设计缺陷。
-         //已经修正，每一个下载任务都自带一个计时器。
+         //已经修正，目前每一个下载任务都自带一个计时器。
          //connect(timer,SIGNAL(timeout()),thread->download,SLOT(updateSpeed()));
 
-         connect(this,SIGNAL(getPair(pair_2int64&,int)),thread->download,SLOT(sendSpeed_leftSize(pair_2int64&,int)));
+         //从线程结束，发送信号到主线程。
+         //connect(thread,SIGNAL(finished()),this,SLOT(PrintThreadEnd()));
+
 
      }
 
+     //下载状态
      //state = Downloading;
-     //RunningThread = ThreadNum;
-
-
      return;
 }
 //一个线程下载任务完结的时候，会发送这个信号到 下载控制器，通知自己即将结束。。
@@ -138,20 +132,22 @@ void DownloadControl::NetSpeed(){
     leftSize = 0;
 
 
- /*   for(int i =0;i < ThreadNum;i++){
+    //不能这样跨线程直接调用另一个线程的函数
+    /*
+    for(int i =0;i < ThreadNum;i++){
         speed += threads[i]->download->getSpeed_leftSize().first;
         leftSize += threads[i]->download->getSpeed_leftSize().second;
     }
     */
 
     for(int i =0;i < ThreadNum;i++){
-
-        //emit getPair(pair,i,speed,leftSize);
+        //会将pair的引用，与目标线程编号当做信号参数传递，只有目标线程，才会改变这个引用的数值。
         emit getPair(pair,i);
         speed += (pair.first)*2;
         leftSize += pair.second;
      }
 
+    //求出当前网络速度，与计算剩余时间大小，需要考虑如果下载速度为0的时候可能会造成的除0错误。
     QString str1,str2;
     str1 = QString::number(speed/1024,10)+" K/s";
     if(speed != 0){
@@ -189,7 +185,7 @@ void DownloadControl::SubPartFinished()
         file->close();
         timer->stop();
         qDebug() << "DownloadControl::SubPartFinished()--> Download finished";
-        emit FileDownloadFinished(saveFile);
+        emit FileDownloadFinished(saveFile,TASK_ID);
         QString str1("");
         QString str2("下载完成");
         emit send_Ui_Msg(TASK_ID,saveFile,totalSize,totalSize,str1,str2);
@@ -198,7 +194,7 @@ void DownloadControl::SubPartFinished()
 }
 
 
-
+//通过url获取目标文件的大小。
 qint64 DownloadControl::GetFileSize(QUrl url,int tryTimes)
 {
     qint64 size = -1;
@@ -227,10 +223,7 @@ qint64 DownloadControl::GetFileSize(QUrl url,int tryTimes)
         size = var.toLongLong();
         break;
     }
-
     return size;
 }
-void DownloadControl::updateUI(QString str1, QString str2){
-   // emit send_Ui_Msg(TASK_ID,qint64,qint64,QString,QString);
-}
+
 

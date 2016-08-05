@@ -28,6 +28,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->tab_2->setLayout(Finished_layout);
     ui->tab_3->setLayout(Trash_layout);
 
+    download_space = new QSpacerItem(30,30);
+    downloading_layout->addSpacerItem(download_space);
+
 }
 
 MainWindow::~MainWindow()
@@ -51,7 +54,7 @@ MainWindow::~MainWindow()
     delete Trash_layout;
     Trash_layout = NULL;
 }
-//每一个正在下载的任务都有一个对应的下载状态栏。
+//每一个正在下载的任务都有一个对应的进度状态栏。
 ProgressTools::ProgressTools(){
     filename = new QLabel;
     bar = new QProgressBar;
@@ -69,7 +72,7 @@ ProgressTools::ProgressTools(){
     layout->addWidget(pauseDownload);
     layout->addWidget(stopDownload);
 }
-//进度条的析构函数。
+//进度状态栏的析构函数。
 ProgressTools::~ProgressTools(){
     delete filename;
     filename = NULL;
@@ -90,26 +93,41 @@ ProgressTools::~ProgressTools(){
 void MainWindow::on_pushButton_clicked()
 {
 
+
     QUrl url= ui->lineEdit->text();
     QFileInfo info(url.path());
+
     QString fileName(info.fileName());
 
-    //任务编号。
+    //任务编号，Task_ID,从0开始编号，每增加一个任务，编号+1 .
     dow = new DownloadControl(Task_ID++);
+
+    //把新任务的下载管理器指针与状态栏指针都保存到一个pair对象中。
     pair.first = dow;
     pair.second = new ProgressTools();
+
+    //将pair添加到任务列表里去。
     task.append(pair);
-    dow->DownloadFile(url,fileName,30);
-    connect(dow,SIGNAL(FileDownloadFinished(QString)),this,SLOT(TaskFinished(QString)));
+
+    //开启下载管理器
+    dow->DownloadFile(url,fileName,100);
+
+    //下载管理器完成任务，发送信号表示已完成文件的下载
+    connect(dow,SIGNAL(FileDownloadFinished(QString,int)),this,SLOT(TaskFinished(QString,int)));
+
     //在tab_1中添加当前新建下载任务的状态栏。
     downloading_layout->addLayout(pair.second->layout);
+
+    //下载管理器通过信号来更新它的状态栏。
     connect(dow,SIGNAL(send_Ui_Msg(int,QString,qint64,qint64,QString,QString)),
             this,SLOT(upDateUI(int,QString,qint64,qint64,QString,QString)));
 
 }
 
-void MainWindow::TaskFinished(QString filename){
+void MainWindow::TaskFinished(QString filename,int _task_id){
     qDebug()<<filename<<"下载完成 !";
+   // QLayoutItem *item = task[_task_id].second->layout;
+   // downloading_layout->removeItem(item);
 }
 
 //暂停下载
