@@ -21,6 +21,8 @@
 #include<QHBoxLayout>
 #include<QVBoxLayout>
 #include<QSpacerItem>
+#include<QFileDialog>
+#include<QDesktopServices>
 
 
 namespace Ui {
@@ -38,10 +40,22 @@ public:
     QLabel *lefttime;
     QPushButton *pauseDownload;
     QPushButton *stopDownload;
-    QHBoxLayout * layout;
+    QHBoxLayout * d_layout;
+    QHBoxLayout * f_layout;
+    QHBoxLayout * t_layout;
  };
 //使用pair将一个下载任务的 下载控制器 与 下载状态栏 的对象的指针包装，并存到任务列表中。
 typedef  QPair<DownloadControl*,ProgressTools *> taskPair;
+
+struct FinishedTools{
+    FinishedTools();
+   QHBoxLayout layout;
+   QLabel filename;
+   QLabel totalSize;
+   QString path;
+   QPushButton LookInDir;
+   QPushButton delFile;
+};
 
 
 
@@ -53,16 +67,22 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+    void hideAll(int);
 
     //任务列表，保存下载任务的状态。
     QVector<taskPair> task;
+    QVector<FinishedTools*> task_finish;
+    //保存完成任务的列表
+
+    //垃圾箱列表
 
 private slots:
     void on_pushButton_clicked();
-     void TaskFinished(QString,int);
+     void TaskFinished(QString,int,qint64,QString);
 
      void on_pushButton_2_clicked();
      void upDateUI(int,QString,qint64,qint64,QString,QString);
+     void LookFileInDir();
 
 private:
     Ui::MainWindow *ui;

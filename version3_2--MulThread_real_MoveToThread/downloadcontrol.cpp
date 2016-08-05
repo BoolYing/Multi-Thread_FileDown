@@ -34,7 +34,7 @@ QString DownloadControl::errorString()
 
 }
 
-void DownloadControl::DownloadFile(QUrl url, QString saveFile, int ThreadNum)
+void DownloadControl::DownloadFile(QUrl url, QString saveFile, int ThreadNum,QString dir)
 {
     //标志当前状态。
     //if(state == )
@@ -60,7 +60,10 @@ void DownloadControl::DownloadFile(QUrl url, QString saveFile, int ThreadNum)
         qDebug()<<"totalSize == -1";
         return ;
     }
-    file = new QFile(saveFile,this);
+    //将dir保存起来，在下载完成后将当做信号参数进行传递。
+    FileDir = dir;
+    dir = dir + '/'+ saveFile;
+    file = new QFile(dir);
     if(!file->open(QFile::WriteOnly))
     {
         errorInfo = "can not open file : \n" + file->errorString();
@@ -185,7 +188,7 @@ void DownloadControl::SubPartFinished()
         file->close();
         timer->stop();
         qDebug() << "DownloadControl::SubPartFinished()--> Download finished";
-        emit FileDownloadFinished(saveFile,TASK_ID);
+        emit FileDownloadFinished(saveFile,TASK_ID,totalSize,FileDir);
         QString str1("");
         QString str2("下载完成");
         emit send_Ui_Msg(TASK_ID,saveFile,totalSize,totalSize,str1,str2);

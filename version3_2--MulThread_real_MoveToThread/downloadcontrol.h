@@ -30,7 +30,7 @@ public:
      ~DownloadControl();
 
      //开始下载
-    void DownloadFile(QUrl url,QString saveFile,int _ThreadNum);
+    void DownloadFile(QUrl url,QString saveFile,int _ThreadNum,QString dir);
 
     //通过配置文件继续下载
     //void DownloadFile(QString configFile);
@@ -62,11 +62,12 @@ private:
     QString errorInfo;
     QMutex *mutex;
     int TASK_ID;
+    QString FileDir;
 
 
 signals:
     //下载完成会发送这个信号，将任务从正在下载界面，挪到下载完成界面。
-    void FileDownloadFinished(QString saveFile,int TASK_ID);
+    void FileDownloadFinished(QString saveFile,int TASK_ID,qint64 totalSize,QString path);
 
     //这个信号每秒发送，去请求获得每一个线程的数据。
     void  getPair(pair_2int64 & pair,int i);

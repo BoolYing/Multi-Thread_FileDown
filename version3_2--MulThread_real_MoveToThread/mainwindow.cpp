@@ -37,14 +37,20 @@ MainWindow::~MainWindow()
 {
     delete ui;
     for(int i =0;i<task.length();i++){
-        if(!task[i].first){
+        if(task[i].first){
             delete task[i].first;
             task[i].first = NULL;
         }
-        if(!task[i].second){
+        if(task[i].second){
             delete task[i].second;
             task[i].second = NULL;
 
+        }
+    }
+    for(int i =0;i<task_finish.length();i++)
+    {
+        if(task_finish[i]){
+            delete task_finish[i];
         }
     }
     delete downloading_layout;
@@ -64,13 +70,18 @@ ProgressTools::ProgressTools(){
     pauseDownload->setText("暂停");
     stopDownload = new QPushButton;
     stopDownload->setText("停止");
-    layout = new QHBoxLayout;
-    layout->addWidget(filename);
-    layout->addWidget(bar);
-    layout->addWidget(speed);
-    layout->addWidget(lefttime);
-    layout->addWidget(pauseDownload);
-    layout->addWidget(stopDownload);
+
+    d_layout = new QHBoxLayout;
+    d_layout->addWidget(filename);
+    d_layout->addWidget(bar);
+    d_layout->addWidget(speed);
+    d_layout->addWidget(lefttime);
+    d_layout->addWidget(pauseDownload);
+    d_layout->addWidget(stopDownload);
+
+    f_layout = new QHBoxLayout;
+    t_layout = new QHBoxLayout;
+
 }
 //进度状态栏的析构函数。
 ProgressTools::~ProgressTools(){
@@ -84,8 +95,19 @@ ProgressTools::~ProgressTools(){
     lefttime = NULL;
     delete pauseDownload;
     pauseDownload = NULL;
-    delete layout ;
-    layout  = NULL;
+    delete d_layout ;
+    d_layout  = NULL;
+    delete t_layout;
+    t_layout = NULL;
+    delete f_layout;
+    f_layout = NULL;
+
+}
+FinishedTools::FinishedTools(){
+    layout.addWidget(&filename);
+    layout.addWidget(&totalSize);
+    layout.addWidget(&LookInDir);
+    layout.addWidget(&delFile);
 
 }
 
@@ -97,7 +119,12 @@ void MainWindow::on_pushButton_clicked()
     QUrl url= ui->lineEdit->text();
     QFileInfo info(url.path());
 
+   QString dir = QFileDialog::getExistingDirectory(this);
+
+    qDebug()<< "path :"<<dir;
     QString fileName(info.fileName());
+
+
 
     //任务编号，Task_ID,从0开始编号，每增加一个任务，编号+1 .
     dow = new DownloadControl(Task_ID++);
@@ -108,15 +135,17 @@ void MainWindow::on_pushButton_clicked()
 
     //将pair添加到任务列表里去。
     task.append(pair);
+    //在tab_1中添加当前新建下载任务的状态栏。
+    downloading_layout->addLayout(pair.second->d_layout);
 
     //开启下载管理器
-    dow->DownloadFile(url,fileName,100);
+    dow->DownloadFile(url,fileName,10,dir);
 
     //下载管理器完成任务，发送信号表示已完成文件的下载
-    connect(dow,SIGNAL(FileDownloadFinished(QString,int)),this,SLOT(TaskFinished(QString,int)));
+    connect(dow,SIGNAL(FileDownloadFinished(QString,int,qint64,QString)),
+            this,SLOT(TaskFinished(QString,int,qint64,QString)));
 
-    //在tab_1中添加当前新建下载任务的状态栏。
-    downloading_layout->addLayout(pair.second->layout);
+
 
     //下载管理器通过信号来更新它的状态栏。
     connect(dow,SIGNAL(send_Ui_Msg(int,QString,qint64,qint64,QString,QString)),
@@ -124,17 +153,59 @@ void MainWindow::on_pushButton_clicked()
 
 }
 
-void MainWindow::TaskFinished(QString filename,int _task_id){
-    qDebug()<<filename<<"下载完成 !";
+void MainWindow::TaskFinished(QString _filename,int _task_id,qint64 _totalSize,QString _path){
+    qDebug()<<_filename<<"下载完成 !";
+
+    hideAll(_task_id);
+
+    FinishedTools *tools = new FinishedTools;
+    task_finish.append(tools);
+    tools->filename.setText(_filename);
+    tools->totalSize.setText(QString::number(_totalSize));
+    tools->path = _path;
+    tools->LookInDir.setText("在目录中查看");
+    tools->delFile.setText("删除");
+    connect(&(tools->LookInDir),SIGNAL(clicked(bool)),this,SLOT(LookFileInDir()));
+    qDebug()<<"file path  :"<<_path;
+    Finished_layout->addLayout(&(tools->layout));
+
+
+
+
    // QLayoutItem *item = task[_task_id].second->layout;
    // downloading_layout->removeItem(item);
 }
+void MainWindow::hideAll(int id){
+    ProgressTools * tools=task[id].second;
+    tools->bar->hide();
+    tools->d_layout->removeWidget(tools->bar);
+    tools->filename->hide();
+    tools->d_layout->removeWidget(tools->filename);
+    tools->lefttime->hide();
+    tools->d_layout->removeWidget(tools->lefttime);
+    tools->speed->hide();
+    tools->d_layout->removeWidget(tools->speed);
+    tools->pauseDownload->hide();
+    tools->d_layout->removeWidget(tools->pauseDownload);
+    tools->stopDownload->hide();
+    tools->d_layout->removeWidget(tools->stopDownload);
+
+
+     //delete task[id].second;
+    //tools->d_layout->removeItem();
+
+    //tools->filename->
+
+}
+
+void MainWindow::LookFileInDir(){
+    //QDesktopServices::openUrl(QUrl(filePath, QUrl::TolerantMode));
+}
+
 
 //暂停下载
 void MainWindow::on_pushButton_2_clicked()
 {
-
-
 }
 
 
