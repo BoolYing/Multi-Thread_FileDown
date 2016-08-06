@@ -46,7 +46,6 @@ MainWindow::~MainWindow()
         if(task[i].second){
             delete task[i].second;
             task[i].second = NULL;
-
         }
     }
     for(int i =0;i<task_finish.length();i++)
@@ -183,7 +182,7 @@ void MainWindow::TaskFinished(QString _filename,int _task_id,qint64 _totalSize,Q
 
     hideAll(_task_id);
 
-    ui->tab_2->show();
+   // ui->tab_2->show();
     FinishedTools *tools = new FinishedTools;
     task_finish.append(tools);
     tools->filename.setText( _filename  );
@@ -196,8 +195,6 @@ void MainWindow::TaskFinished(QString _filename,int _task_id,qint64 _totalSize,Q
     qDebug()<<"file path  :"<<_path;
     Finished_layout->addLayout(&(tools->layout));
     qDebug()<<"Finished_layout->addLayout(&(tools->layout)) ok !";
-
-
 
 
    // QLayoutItem *item = task[_task_id].second->layout;
@@ -225,9 +222,6 @@ void MainWindow::hideAll(int id){
     //tools->filename->
 
 }
-
-
-
 
 
 void MainWindow::upDateUI(int Task_ID,

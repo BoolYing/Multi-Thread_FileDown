@@ -34,7 +34,6 @@ void DThread::changeTag(){
 
 void DThread::run(){
 
-
     //这个对象不能被创建在从线程中，必须得建立在主线程，也就是在类的构造函数中创建。
     //download = new Download(ID);
 
