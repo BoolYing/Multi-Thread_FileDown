@@ -44,6 +44,7 @@ void DownloadControl::DownloadFile(QUrl url,
                                    QString dir,
                                    QFile *_configFile)
 {
+    configFile = _configFile;
     //标志当前状态。
     //if(state == )
     if(file != NULL)
@@ -141,6 +142,12 @@ void DownloadControl::PrintThreadEnd(){
 //暂停下载
 void DownloadControl::pause(){
     qDebug()<<"Pause download....";
+
+    for(int i =0;i<ThreadNum;i++){
+        threads[i]->getMessage(startArray[i],newArray[i],endArray[i]);
+
+    }
+
 
 }
 

@@ -52,7 +52,6 @@ void Download::StartDownload( QUrl url,
     //根据HTTP协议，写入RANGE头部，说明请求文件的范围
     range.sprintf("Bytes=%lld-%lld",startBytes, endBytes);
     qheader.setRawHeader("Range", range.toUtf8());
-    //qheader.setRawHeader("Range",tr("bytes=%1-%2").arg(startBytes,endBytes).toUtf8());
 
     //开始下载
 
@@ -64,7 +63,7 @@ void Download::StartDownload( QUrl url,
     connect(timer,SIGNAL(timeout()),this,SLOT(updateSpeed()));
 
 
-    // qDebug() << "Download -->Thread " <<Thread_ID << " StartDownload().";
+    //qDebug() << "Download -->Thread " <<Thread_ID << " StartDownload().";
 }
 
 
@@ -100,12 +99,12 @@ void Download::httpFinished(){
 void Download::httpReadyRead(){
     if ( !file )
         return;
-     mutex->lock();
+
 
      buffer = reply->readAll();
      /****************************/
 
-
+     mutex->lock();
 
      file->seek(startBytes+newSize);
      file->write(buffer);
@@ -117,7 +116,11 @@ void Download::httpReadyRead(){
 }
 
 
-
+void Download::getMessage(qint64 & _startPoint, qint64 & _newSize, qint64 &_endPoint){
+    _startPoint = startBytes;
+    _newSize = newSize;
+    _endPoint = endBytes;
+}
 
 
 

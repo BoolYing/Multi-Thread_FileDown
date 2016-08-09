@@ -46,6 +46,7 @@ public:
     void startAgain();
 
     pair_2int64 pair;
+    int TASK_ID;
 
 
 
@@ -66,8 +67,12 @@ private:
     QVector<DThread*> threads;
     QString errorInfo;
     QMutex *mutex;
-    int TASK_ID;
+
     QString FileDir;
+
+    qint64 startArray[50];
+    qint64 newArray[50];
+    qint64 endArray[50];
 
 
 signals:

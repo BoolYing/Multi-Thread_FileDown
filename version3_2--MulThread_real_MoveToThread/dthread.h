@@ -19,6 +19,7 @@ public:
     //设置下载链接与范围
     void SetInitValue(QUrl _url,QFile *_file,qint64 startPoint,qint64 endPoint,QMutex *);
 
+    void getMessage(qint64&,qint64&,qint64&);
 private:
     int ID;
     QUrl url;

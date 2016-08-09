@@ -56,6 +56,8 @@ private slots:
     void httpFinished();
     //有数据可读的时候，读取数据并更新已读取字节大小
     void httpReadyRead();
+    void getMessage(qint64&,qint64&,qint64&);
+
 
 public slots:
     //和DownloadControl类的定时器绑定，每秒会计算一次当前线程的下载速度与剩余大小，

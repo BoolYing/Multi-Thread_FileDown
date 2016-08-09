@@ -96,7 +96,6 @@ MainWindow::~MainWindow()
     delete Trash_layout;
 
     delete ui;
-
 }
 
 //每一个正在下载的任务都有一个对应的进度状态栏。
@@ -127,11 +126,12 @@ ProgressTools::ProgressTools(QObject *parent,int task_id):QObject(parent)
 }
 */
 
-ProgressTools::ProgressTools(QObject *parent,int task_id):QObject(parent)
+ProgressTools::ProgressTools(QObject *parent,int task_id,DownloadControl *_dow):QObject(parent)
 {
     task_ID = task_id;
     status = 0;
-
+    dow = _dow;
+    //_window = parent;
     pauseDownload.setText("暂停下载");
     stopDownload.setText("停止");
 
@@ -163,19 +163,24 @@ ProgressTools::ProgressTools(QObject *parent,int task_id):QObject(parent)
 
 //点击按钮，若status为0，则发射暂停下载信号；否则为1，发射继续下载信号。
 void ProgressTools::changeStatus(){
-    if(status == 0)
+    if(status == 0){
         emit pause_signal();
-    else
+        status = 1;
+        }
+    else{
         emit startAgain_signal();
+        status = 0;
+    }
 }
-
+//暂停下载
 void ProgressTools::pause(){
     this->pauseDownload.setText("继续下载");
-
-
+    dow->pause();
 }
+//继续下载
 void ProgressTools::startAgain(){
     this->pauseDownload.setText("暂停下载");
+    dow->startAgain();
 
 }
 
@@ -237,14 +242,13 @@ void MainWindow::on_pushButton_clicked()
 
     //把新任务的下载管理器指针与状态栏指针都保存到一个pair对象中。
     pair.first = dow;
-    pair.second = new ProgressTools(this,Task_ID++);
+    pair.second = new ProgressTools(this,Task_ID++,dow);
 
 
     //将pair添加到任务列表里去。
     task.append(pair);
     //在tab_1中添加当前新建下载任务的状态栏。
 
-    //downloading_layout->addLayout(&(pair.second->d_layout));
     downloading_layout->addWidget(&(pair.second->widget));
 
     //开启下载管理器

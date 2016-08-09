@@ -53,9 +53,11 @@ public slots:
 class ProgressTools:public QObject {
     Q_OBJECT
 public:
-    ProgressTools(QObject *parent = 0,int task_id = 0);
+    ProgressTools(QObject *parent = 0,int task_id = 0,DownloadControl * _dow = 0);
     QWidget widget;
+    MainWindow *_window;
     int task_ID;
+    DownloadControl * dow;
     QLabel filename ;
     QProgressBar bar ;
     QLabel  speed;
