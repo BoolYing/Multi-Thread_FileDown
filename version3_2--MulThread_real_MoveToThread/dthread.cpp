@@ -1,15 +1,12 @@
 
 #include"dthread.h"
 
-DThread::DThread(int _ID)
+DThread::DThread(QObject * parent,int _ID)
 {
      ID = _ID;
    // qDebug()<<"Thread " << ID <<" created.";
     download = NULL;
 
-}
-DThread::~DThread(){
-    delete download;
 }
 //为线程设置下载任务的范围。
 void DThread::SetInitValue(QUrl _url,
@@ -24,7 +21,8 @@ void DThread::SetInitValue(QUrl _url,
     mutex = _mutex;
     tag = false;
 
-    download = new Download(ID);
+
+    download = new Download(this,ID);
 }
 
 

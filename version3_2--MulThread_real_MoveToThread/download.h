@@ -17,7 +17,7 @@ class Download:public QObject
 {
     Q_OBJECT
 public:
-    Download(int _ID);
+    explicit Download(QObject *parent = 0,int _ID = 0);
     void StartDownload(QUrl url,
                        QFile *_file,
                        qint64 _startBytes,
@@ -44,7 +44,6 @@ private:
     //从缓冲区读取字节到buffer
     QByteArray buffer;
     QTimer  *timer;
-
 
     QMutex * mutex;
 signals:

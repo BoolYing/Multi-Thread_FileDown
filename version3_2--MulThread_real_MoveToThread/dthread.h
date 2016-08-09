@@ -14,11 +14,10 @@ class DThread:public QThread
 {
     Q_OBJECT
 public:
-    DThread(int );
+    DThread(QObject * parent = 0,int _ID = 0);
     Download * download;
     //设置下载链接与范围
     void SetInitValue(QUrl _url,QFile *_file,qint64 startPoint,qint64 endPoint,QMutex *);
-    ~DThread();
 
 private:
     int ID;

@@ -2,7 +2,7 @@
 
 //暂时没有传MainWindow的指针，还没有做同步界面进度的功能。
 //DownloadControl::DownloadControl(MainWindow * _window, QObject * parent = 0):window(_window),QObject(parent)
-DownloadControl::DownloadControl(int _TASK_ID)
+DownloadControl::DownloadControl(QObject *parent,int _TASK_ID):QObject(parent)
 {
    //manager = new QNetworkAccessManager(this);
     Thread_Finished_Num = 0;
@@ -10,6 +10,7 @@ DownloadControl::DownloadControl(int _TASK_ID)
     totalSize = readySize = leftSize =0;
     state = Waiting;
     file = NULL;
+
     mutex = new QMutex;
     //初始化当前下载管理器的任务编号.
     TASK_ID = _TASK_ID;
@@ -19,13 +20,16 @@ DownloadControl::DownloadControl(int _TASK_ID)
 DownloadControl::~DownloadControl(){
     if(mutex){
         delete mutex;
+        mutex = NULL;
     }
+    /*
     for(int i =0;i<ThreadNum;i++)
     {
         if(threads[i]){
             delete threads[i];
         }
     }
+    */
 }
 
 QString DownloadControl::errorString()
@@ -99,7 +103,7 @@ void DownloadControl::DownloadFile(QUrl url,
          qint64 startPoint = totalSize * i / ThreadNum;
          qint64 endPoint = totalSize * (i + 1) / ThreadNum;
 
-         DThread * thread = new DThread(i);
+         DThread * thread = new DThread(this,i);
          thread->SetInitValue(url,file,startPoint,endPoint,mutex);
          threads.append(thread);
 
@@ -143,21 +147,11 @@ void DownloadControl::pause(){
 //继续下载
 void DownloadControl::startAgain(){
     qDebug()<<"Continue download....";
-
 }
 
 void DownloadControl::NetSpeed(){
     speed = 0;
     leftSize = 0;
-
-
-    //不能这样跨线程直接调用另一个线程的函数
-    /*
-    for(int i =0;i < ThreadNum;i++){
-        speed += threads[i]->download->getSpeed_leftSize().first;
-        leftSize += threads[i]->download->getSpeed_leftSize().second;
-    }
-    */
 
     for(int i =0;i < ThreadNum;i++){
         //会将pair的引用，与目标线程编号当做信号参数传递，只有目标线程，才会改变这个引用的数值。

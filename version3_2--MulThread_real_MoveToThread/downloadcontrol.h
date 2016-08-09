@@ -26,7 +26,7 @@ public:
     enum State{Waiting,Downloading,Pause,Stop,Finished};
 
     //DownloadControl(MainWindow * _window,QObject * parent);
-     DownloadControl(int );
+     DownloadControl(QObject *parent = 0, int _TASK_ID = 0);
      ~DownloadControl();
 
      //开始下载

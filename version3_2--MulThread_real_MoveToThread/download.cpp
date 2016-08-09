@@ -1,7 +1,7 @@
 #include<download.h>
 
-Download::Download(int _ID)
-    : Thread_ID(_ID)
+Download::Download(QObject *parent, int _ID)
+    :Thread_ID(_ID)
 {
     startBytes = endBytes = newSize = oldSize = 0;
     last_15s_Size =0;
@@ -10,20 +10,15 @@ Download::Download(int _ID)
     pair.second = 0;
     speed = 0;
     leftSize = 0;
-    timer = new QTimer();
+    timer = new QTimer(this);
     timer->start(500);
 
   //  qDebug()<<"download part :"<<Thread_ID <<"created.";
 
 }
 Download::~Download()
-{
-    if(manager){
+{   
     delete manager;
-    }
-    if(timer){
-        delete timer;
-    }
 }
 
 void Download::StartDownload( QUrl url,
@@ -37,7 +32,6 @@ void Download::StartDownload( QUrl url,
         return;
     }
 
-    //manager = _manager;
 
 
     qDebug()<<"Thread "<<Thread_ID <<" start downloading.";
@@ -48,11 +42,14 @@ void Download::StartDownload( QUrl url,
     mutex      = _mutex;
     leftSize   = endBytes - startBytes;
 
-    //根据HTTP协议，写入RANGE头部，说明请求文件的范围
+    //这里不能加this，因为这个对象将会在从线程里被创建，而当前对象是在主线程里被创建的，跨线程指定父子关系，程序会报警。
+    //manager = new QNetworkAccessManager(this);
     manager = new QNetworkAccessManager();
+
     QNetworkRequest qheader;
     qheader.setUrl(url);
     QString range;
+    //根据HTTP协议，写入RANGE头部，说明请求文件的范围
     range.sprintf("Bytes=%lld-%lld",startBytes, endBytes);
     qheader.setRawHeader("Range", range.toUtf8());
     //qheader.setRawHeader("Range",tr("bytes=%1-%2").arg(startBytes,endBytes).toUtf8());
@@ -103,11 +100,12 @@ void Download::httpFinished(){
 void Download::httpReadyRead(){
     if ( !file )
         return;
+     mutex->lock();
 
      buffer = reply->readAll();
      /****************************/
 
-     mutex->lock();
+
 
      file->seek(startBytes+newSize);
      file->write(buffer);

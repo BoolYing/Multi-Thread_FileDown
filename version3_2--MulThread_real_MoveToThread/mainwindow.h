@@ -30,11 +30,13 @@ class MainWindow;
 }
 
 //每一个正在下载的任务都有一个对应的下载状态栏，包含ProgressBar、lable、button.
-struct ProgressTools {
+/*
+class ProgressTools:public QObject {
+    Q_OBJECT
 public:
-    ProgressTools();
-    ~ProgressTools();
-    QLabel * filename ;
+    ProgressTools(QObject *parent = 0,int task_id = 0);
+    int task_ID;
+    QLabel *filename ;
     QProgressBar *bar ;
     QLabel * speed;
     QLabel *lefttime;
@@ -43,7 +45,38 @@ public:
     QHBoxLayout * d_layout;
     QHBoxLayout * f_layout;
     QHBoxLayout * t_layout;
+public slots:
+    //void pause();
+    //void startAgain();
  };
+*/
+class ProgressTools:public QObject {
+    Q_OBJECT
+public:
+    ProgressTools(QObject *parent = 0,int task_id = 0);
+    QWidget widget;
+    int task_ID;
+    QLabel filename ;
+    QProgressBar bar ;
+    QLabel  speed;
+    QLabel lefttime;
+    QPushButton pauseDownload;
+    QPushButton stopDownload;
+    QHBoxLayout  d_layout;
+    QHBoxLayout  f_layout;
+    QHBoxLayout  t_layout;
+private:
+    int status; //按钮状态
+signals:
+    void pause_signal();//暂停下载信号
+    void startAgain_signal();//继续下载信号
+
+public slots:
+    void pause();//暂停函数
+    void startAgain();//继续下载函数
+    void changeStatus();//改变按钮状态功能
+ };
+
 //使用pair将一个下载任务的 下载控制器 与 下载状态栏 的对象的指针包装，并存到任务列表中。
 typedef  QPair<DownloadControl*,ProgressTools *> taskPair;
 
@@ -51,8 +84,7 @@ class FinishedTools:public QObject{
 
      Q_OBJECT
 public:
-
-   FinishedTools();
+   FinishedTools(QObject * parent = 0);
    QHBoxLayout layout;
    QLabel filename;
    QLabel totalSize;
