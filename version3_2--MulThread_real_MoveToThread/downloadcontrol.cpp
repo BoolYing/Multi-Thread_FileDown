@@ -34,7 +34,11 @@ QString DownloadControl::errorString()
 
 }
 
-void DownloadControl::DownloadFile(QUrl url, QString saveFile, int ThreadNum,QString dir)
+void DownloadControl::DownloadFile(QUrl url,
+                                   QString saveFile,
+                                   int ThreadNum,
+                                   QString dir,
+                                   QFile *_configFile)
 {
     //标志当前状态。
     //if(state == )
@@ -64,7 +68,7 @@ void DownloadControl::DownloadFile(QUrl url, QString saveFile, int ThreadNum,QSt
     FileDir = dir;
     dir = dir + '/'+ saveFile;
     file = new QFile(dir);
-    if(!file->open(QFile::WriteOnly))
+    if(!file->open(QFile::WriteOnly | QFile::Append))
     {
         errorInfo = "can not open file : \n" + file->errorString();
         file->close();
@@ -124,11 +128,23 @@ void DownloadControl::DownloadFile(QUrl url, QString saveFile, int ThreadNum,QSt
      //state = Downloading;
      return;
 }
+
 //一个线程下载任务完结的时候，会发送这个信号到 下载控制器，通知自己即将结束。。
 void DownloadControl::PrintThreadEnd(){
     //qDebug()<<"DownloadControl::Print_ThreadEnd()-->Thread is end.";
 }
 
+//暂停下载
+void DownloadControl::pause(){
+    qDebug()<<"Pause download....";
+
+}
+
+//继续下载
+void DownloadControl::startAgain(){
+    qDebug()<<"Continue download....";
+
+}
 
 void DownloadControl::NetSpeed(){
     speed = 0;

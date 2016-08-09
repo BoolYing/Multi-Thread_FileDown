@@ -30,16 +30,20 @@ public:
      ~DownloadControl();
 
      //开始下载
-    void DownloadFile(QUrl url,QString saveFile,int _ThreadNum,QString dir);
+    void DownloadFile(QUrl url, QString saveFile, int _ThreadNum, QString dir, QFile *_configFile);
 
     //通过配置文件继续下载
-    //void DownloadFile(QString configFile);
+    //void DownloadFile(QString *configFile);
 
     //获取下载链接大小
     qint64 GetFileSize(QUrl url,int tryTimes);
 
     //用来获取错误信息。
     QString errorString();
+
+    void pause();
+
+    void startAgain();
 
     pair_2int64 pair;
 
@@ -56,6 +60,7 @@ private:
     QTimer *timer_15s;      //超时15s则出现网络异常，则暂停下载。
     MainWindow * window;
     QFile *file;
+    QFile * configFile; //配置文件的文件指针。
     State state;
     int Thread_Finished_Num;
     QVector<DThread*> threads;
@@ -85,10 +90,7 @@ private slots:
      //一个线程下载任务完结的时候，会发送这个信号到 下载控制器，通知自己即将结束。。
      void PrintThreadEnd();
 
-
-
 };
-
 
 
 #endif // DOWNLOADCONTROL

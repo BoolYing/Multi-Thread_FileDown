@@ -86,13 +86,16 @@ public:
 
 private slots:
     void on_pushButton_clicked();
-     void TaskFinished(QString,int,qint64,QString);
+    void TaskFinished(QString,int,qint64,QString);
 
-     void upDateUI(int,QString,qint64,qint64,QString,QString);
+    void upDateUI(int,QString,qint64,qint64,QString,QString);
 
 
 private:
-    Ui::MainWindow *ui;
+    Ui::MainWindow *ui;  
+    QFile * file;
+    QFile * configFile;
+
     DownloadControl *dow;
 
     //临时保存一个任务信息的pair。
@@ -104,6 +107,7 @@ private:
     QVBoxLayout *Trash_layout;
     int Task_ID;
     QSpacerItem *download_space;
+
 
 };
 
