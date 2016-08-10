@@ -252,7 +252,7 @@ void MainWindow::on_pushButton_clicked()
     downloading_layout->addWidget(&(pair.second->widget));
 
     //开启下载管理器
-    dow->DownloadFile(url,fileName,10,dir,configFile);
+    dow->DownloadFile(url,fileName,5,dir,configFile);
 
     //下载管理器完成任务，发送信号表示已完成文件的下载
     connect(dow,SIGNAL(FileDownloadFinished(QString,int,qint64,QString)),
@@ -263,12 +263,11 @@ void MainWindow::on_pushButton_clicked()
     //下载管理器通过信号来更新它的状态栏。
     connect(dow,SIGNAL(send_Ui_Msg(int,QString,qint64,qint64,QString,QString)),
             this,SLOT(upDateUI(int,QString,qint64,qint64,QString,QString)));
-
 }
 
 void MainWindow::TaskFinished(QString _filename,int _task_id,qint64 _totalSize,QString _path){
-    qDebug()<<_filename<<"下载完成 !";
-    qDebug()<<"file path  :"<<_path;
+    qDebug()<<_path<<_filename<<"下载完成 !";
+    //qDebug()<<"file path  :"<<_path;
     disconnect(dow,SIGNAL(send_Ui_Msg(int,QString,qint64,qint64,QString,QString)),
             this,SLOT(upDateUI(int,QString,qint64,qint64,QString,QString)));
 
@@ -284,6 +283,7 @@ void MainWindow::TaskFinished(QString _filename,int _task_id,qint64 _totalSize,Q
     tools->path = _path;    
 
 
+    //在下载完成界面中，添加任务状态。
     Finished_layout->addLayout(&(tools->layout));
     qDebug()<<"Finished_layout->addLayout(&(tools->layout)) ok !";
 
@@ -306,12 +306,6 @@ void MainWindow::hideAll(int id){
     tools->stopDownload->hide();
     tools->d_layout->removeWidget(tools->stopDownload);
 
-
-     //delete task[id].second;
-    //tools->d_layout->removeItem();
-
-    //tools->filename->
-
 }
 
 */
@@ -332,9 +326,10 @@ void MainWindow::hideAll(int id){
 
     tools->widget.deleteLater();
     */
-   // tools->deleteLater();
+
 
     tools->widget.hide();
+     // tools->deleteLater();
 
 }
 

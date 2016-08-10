@@ -17,16 +17,22 @@ class Download:public QObject
 {
     Q_OBJECT
 public:
-    explicit Download(QObject *parent = 0,int _ID = 0);
-    void StartDownload(QUrl url,
-                       QFile *_file,
-                       qint64 _startBytes,
-                       qint64 _endBytes,
-                       QMutex *_mutex);
+    explicit Download(QUrl _url,
+                      QFile *_file,
+                      qint64 _startPoint,
+                      qint64 _endPoint,
+                      QMutex *_mutex,
+                      int _ID);
+
     ~Download();
+
+    //获取当前下载对象的三个数值：开始节点，已下载量，结束节点
+    void getMessage(qint64&,qint64&,qint64&);
+
 
 
 private:
+    QUrl url;
    QNetworkAccessManager *manager;
     QNetworkReply *reply;
     QFile *file;
@@ -49,6 +55,7 @@ private:
 signals:
    //下载完成，会发送信号到线程中，终止线程里的等待循环，并结束线程。
     void Finished_Thread();
+    void quitThread();
 
 
 private slots:
@@ -56,14 +63,18 @@ private slots:
     void httpFinished();
     //有数据可读的时候，读取数据并更新已读取字节大小
     void httpReadyRead();
-    void getMessage(qint64&,qint64&,qint64&);
 
 
 public slots:
     //和DownloadControl类的定时器绑定，每秒会计算一次当前线程的下载速度与剩余大小，
     //并将结果通过信号参数传递给DownloadControl类对象。
     void updateSpeed();
-    void sendSpeed_leftSize(pair_2int64 &pair,int i);
+    void sendSpeed_leftSize(pair_2int64 &pair);
+
+    void StartDownload();
+
+    //暂停当前线程的下载任务，调用动态分配对象的析构
+    void Thread_pauseDownload();
 
 };
 

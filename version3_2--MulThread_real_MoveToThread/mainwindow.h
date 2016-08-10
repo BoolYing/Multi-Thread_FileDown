@@ -1,8 +1,6 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 #include"downloadcontrol.h"
-#include"download.h"
-#include"dthread.h"
 
 #include <QMainWindow>
 #include<QNetworkAccessManager>

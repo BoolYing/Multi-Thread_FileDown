@@ -15,12 +15,10 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     download.cpp \
-    downloadcontrol.cpp \
-    dthread.cpp
+    downloadcontrol.cpp
 
 HEADERS  += mainwindow.h \
     download.h \
-    downloadcontrol.h \
-    dthread.h
+    downloadcontrol.h
 
 FORMS    += mainwindow.ui

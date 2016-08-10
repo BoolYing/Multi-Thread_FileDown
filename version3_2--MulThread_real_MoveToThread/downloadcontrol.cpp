@@ -1,10 +1,8 @@
 #include"downloadcontrol.h"
 
-//暂时没有传MainWindow的指针，还没有做同步界面进度的功能。
-//DownloadControl::DownloadControl(MainWindow * _window, QObject * parent = 0):window(_window),QObject(parent)
 DownloadControl::DownloadControl(QObject *parent,int _TASK_ID):QObject(parent)
 {
-   //manager = new QNetworkAccessManager(this);
+
     Thread_Finished_Num = 0;
     speed = time_left = 0;
     totalSize = readySize = leftSize =0;
@@ -22,14 +20,6 @@ DownloadControl::~DownloadControl(){
         delete mutex;
         mutex = NULL;
     }
-    /*
-    for(int i =0;i<ThreadNum;i++)
-    {
-        if(threads[i]){
-            delete threads[i];
-        }
-    }
-    */
 }
 
 QString DownloadControl::errorString()
@@ -45,13 +35,10 @@ void DownloadControl::DownloadFile(QUrl url,
                                    QFile *_configFile)
 {
     configFile = _configFile;
-    //标志当前状态。
-    //if(state == )
+
     if(file != NULL)
     {
-        errorInfo = "unknow error";
-        qDebug()<<" errorInfo :" <<errorInfo;
-        //emit error(0,errorInfo);
+        qDebug()<<" error file";
         return ;
     }
     this->ThreadNum = ThreadNum;
@@ -87,10 +74,9 @@ void DownloadControl::DownloadFile(QUrl url,
     //清空threads
      threads.clear();
 
+      //这个定时器只需要定时发送信号，让槽函数统计每一个线程的下载进度。应该只对NetSpeed()负责。
      timer = new QTimer(this);
      timer->start(1000);
-
-      //这个定时器只需要定时发送信号，让槽函数统计每一个线程的下载进度。应该只对NetSpeed()负责。
      connect(timer,SIGNAL(timeout()),this,SLOT(NetSpeed()));
      //暂时未开启网络故障检测功能。
      //timer_15s = new QTimer(this);
@@ -104,49 +90,69 @@ void DownloadControl::DownloadFile(QUrl url,
          qint64 startPoint = totalSize * i / ThreadNum;
          qint64 endPoint = totalSize * (i + 1) / ThreadNum;
 
-         DThread * thread = new DThread(this,i);
-         thread->SetInitValue(url,file,startPoint,endPoint,mutex);
-         threads.append(thread);
+         //DThread * thread = new DThread(this,i);
 
+         QThread * thread = new QThread;
+         Download *download = new Download(url,file,startPoint,endPoint,mutex,i);
+         download->moveToThread(thread);
          thread->start();
 
-        //qDebug()<<"thread :"<<thread<<"  thread->download :"<<thread->download;
+         connect(thread, SIGNAL(started()),download, SLOT(StartDownload()));
+         connect(download,SIGNAL(Finished_Thread()),thread,SLOT(quit()));
+         connect(download,SIGNAL(Finished_Thread()),this,SLOT(SubPartFinished()));
+         connect(thread,SIGNAL(finished()),this,SLOT(PrintThreadEnd()));
 
-         //主线程通过信号将引用类型的参数传递到对应的从线程，从线程通过改变这个引用类型的参数，来达到跨线程发送接收数据。
-         connect(this,SIGNAL(getPair(pair_2int64&,int)),thread->download,
-                SLOT(sendSpeed_leftSize(pair_2int64&,int)));
-
-         //下载任务完成，发送信号到主线程的槽函数。
-         connect(thread->download,SIGNAL(Finished_Thread()),this,SLOT(SubPartFinished()));
-
-         //应该在每一个线程内部，都设置一个定时器，独立的更新自己的数据，并且应该实时的更新自己已经下载的字节大小。
-         //已经修正，目前每一个下载任务都自带一个计时器。
-         //connect(timer,SIGNAL(timeout()),thread->download,SLOT(updateSpeed()));
-
-         //从线程结束，发送信号到主线程。
-         //connect(thread,SIGNAL(finished()),this,SLOT(PrintThreadEnd()));
-
+         connect(download,SIGNAL(quitThread()),thread,SLOT(quit()));
+         connect(this,SIGNAL(pause_Sig()),download,SLOT(Thread_pauseDownload()));
+         threads.append(download);
 
      }
-
-     //下载状态
-     //state = Downloading;
      return;
 }
+/*
+ //通过配置文件继续下载
+void DownloadControl::DownloadFile(QString configFile){
+
+}
+*/
 
 //一个线程下载任务完结的时候，会发送这个信号到 下载控制器，通知自己即将结束。。
 void DownloadControl::PrintThreadEnd(){
-    //qDebug()<<"DownloadControl::Print_ThreadEnd()-->Thread is end.";
+        qDebug()<<"DownloadControl::Print_ThreadEnd()-->Thread is end.";
 }
+
+/*
+ *  临时保存所有线程下载状态的数组
+    qint64 startArray[50];
+    qint64 newArray[50];
+    qint64 endArray[50];
+ *
+*/
 
 //暂停下载
 void DownloadControl::pause(){
     qDebug()<<"Pause download....";
+    disconnect(timer,SIGNAL(timeout()),this,SLOT(NetSpeed()));
+
+    emit pause_Sig();//发送暂停信号，每一个线程都会接收到它
+
+    timer->stop();   //暂停计时器
 
     for(int i =0;i<ThreadNum;i++){
         threads[i]->getMessage(startArray[i],newArray[i],endArray[i]);
+    }               //将每一个线程的具体数据都读取出来，存到数组的相应位置中。
 
-    }
+    file->close();  //统计完毕，关闭文件。
+
+    for(int i = 0;i<ThreadNum;i++)
+        threads[i]->deleteLater();
+                     //析构所有download对象。
+
+    /*********************打开配置文件并写入下载任务的当前状态信息************************/
+
+    Write_To_ConfigFile();
+
+    /*******************************************************************************/
 
 
 }
@@ -154,6 +160,9 @@ void DownloadControl::pause(){
 //继续下载
 void DownloadControl::startAgain(){
     qDebug()<<"Continue download....";
+
+
+
 }
 
 void DownloadControl::NetSpeed(){
@@ -162,8 +171,8 @@ void DownloadControl::NetSpeed(){
 
     for(int i =0;i < ThreadNum;i++){
         //会将pair的引用，与目标线程编号当做信号参数传递，只有目标线程，才会改变这个引用的数值。
-        emit getPair(pair,i);
-        speed += (pair.first)*2;
+       threads[i]->sendSpeed_leftSize(pair);
+        speed += pair.first;
         leftSize += pair.second;
      }
 
@@ -245,5 +254,90 @@ qint64 DownloadControl::GetFileSize(QUrl url,int tryTimes)
     }
     return size;
 }
+void DownloadControl::Write_To_ConfigFile(){
 
+    QString strAll;
+    QStringList strList;
+    bool isFirstPause = true;
+    if(!configFile->open(QFile::ReadOnly|QFile::Text))//打开配置文件,读取所有信息到 缓冲字符串strAll
+    {   //打开失败
+        QString errorInfo =configFile->errorString();
+        configFile->close();
+        configFile = NULL;
+        qDebug()<<"Open file error in Change_ConfigFile() :"<<errorInfo;
+        return ;
+    }
+    else{
+        //打开成功
+        QTextStream stream(configFile);
+        strAll = stream.readAll();
+        //读取完关闭文件，因为信息已经被保存到了变量中
+        configFile->close();
+    }
+    //以截断模式打开配置文件，清空了原本配置文件中的内容。
+    if(!configFile->open(QFile::WriteOnly|QFile::Text))//打开配置文件
+    {
+        QString errorInfo =configFile->errorString();
+        configFile->close();
+        configFile = NULL;
+        qDebug()<<"Open file error in Change_ConfigFile() :"<<errorInfo;
+        return ;
+    }
+    else{
+        QTextStream stream(configFile);
+        strList = strAll.split("\n");
+        for(int i =0;i<strList.count();i++)
+        {
+            if(i == strList.count()-1)
+            {
+                //最后一行不需要换行
+                stream<<strList.at(i);
+            }
+            else
+            {
+                if(strList.at(i).contains(url.toString())&&
+                        strList.at(i+1).contains(FileDir))
+                {//如果匹配到了url与目标路径都符合的条目，则修改条目下边的内容。
+
+
+                    isFirstPause = false; //如果匹配到，则说明这个任务不是第一次点击暂停
+
+                    stream<<strList.at(i)<<"\n";    //写入url
+                    stream<<strList.at(i+1)<<"\n";  //写入路径
+
+                    i += 2;//跳转到下下一行，下下一行内容为线程数。
+                    QString tempStr = strList.at(i);//读取线程数存到字符串
+                    stream<<tempStr<<"\n";
+                    int Thread_Num = tempStr.toInt();//转换为整数int
+                    for(int j = 0;j<Thread_Num;j++)
+                    {
+                        stream << startArray[j]<<"\n";
+                        stream << newArray[j]<<"\n";
+                        stream << endArray[j]<<"\n";
+                    }
+                    i =i + Thread_Num*3 ;
+                }
+                else{
+                    stream<<strList.at(i)<<"\n";
+                }
+            }
+        }
+        if(isFirstPause == true){//如果是第一次暂停，则无法再上述循环中匹配到url，所以将任务信息添加到文本末尾。
+
+            stream<<"\n";
+            QString _url(url.toString());
+            stream << _url<<"\n";
+            stream << FileDir <<"\n";
+            stream << ThreadNum<<"\n";
+            for(int i = 0;i<ThreadNum;i++){
+
+                stream << startArray[i]<<"\n";
+                stream << newArray[i]<<"\n";
+                stream << endArray[i]<<"\n";
+            }
+        }
+         configFile->close();
+    }
+
+}
 

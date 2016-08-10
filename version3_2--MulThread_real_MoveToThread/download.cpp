@@ -1,49 +1,93 @@
 #include<download.h>
 
-Download::Download(QObject *parent, int _ID)
+Download::Download(QUrl _url,
+                   QFile *_file,
+                   qint64 _startPoint,
+                   qint64 _endPoint,
+                   QMutex *_mutex,
+                   int _ID)
     :Thread_ID(_ID)
 {
-    startBytes = endBytes = newSize = oldSize = 0;
+    url = _url;
+    startBytes = _startPoint;
+    endBytes   = _endPoint;
+    file       = _file;
+    mutex      = _mutex;
+    leftSize   = endBytes - startBytes;
+    newSize = oldSize = 0;
     last_15s_Size =0;
-    file = NULL;
     pair.first = 0;
     pair.second = 0;
     speed = 0;
-    leftSize = 0;
-    timer = new QTimer(this);
-    timer->start(500);
 
-  //  qDebug()<<"download part :"<<Thread_ID <<"created.";
+
+
+    qDebug()<<"Thread "<<Thread_ID <<" created.";
+
 
 }
 Download::~Download()
 {   
-    delete manager;
+    if(manager != NULL){
+        delete manager;
+        manager = NULL;
+    }
+    qDebug()<<"Delete Success!!!!!" ;
+}
+//暂停当前线程的下载任务，并调用new的的对象的析构函数。
+void Download::Thread_pauseDownload(){
+
+    disconnect(reply,SIGNAL(finished()),this,SLOT(httpFinished()));
+    disconnect(reply,SIGNAL(readyRead()),this,SLOT(httpReadyRead()));
+    disconnect(timer,SIGNAL(timeout()),this,SLOT(updateSpeed()));
+    if(reply){
+        reply->abort();
+        reply->deleteLater();
+        reply = NULL;
+        //qDebug()<<Thread_ID<<" delete success";
+    }
+
+    if(manager){
+        delete manager;
+        manager = NULL;
+        //qDebug()<<Thread_ID<<" delete success";
+    }
+
+    if(timer){
+        timer->stop();
+        delete timer;
+        timer = NULL;
+        //qDebug()<<Thread_ID<<" delete success";
+    }
+    qDebug()<<Thread_ID<<" delete success";
+
+    /*刷新文件缓冲区
+    mutex->lock();
+    file->flush();
+    mutex->unlock();
+    */
+
+
+    qDebug()<< "Thread_pauseDownload() -->"<<"Thread id :"<<Thread_ID
+            <<"\nStartByets:" <<startBytes
+            <<"\nnewSize   :"<<newSize
+            <<"\nendBytes  :"<<endBytes;
+    emit quitThread();
+
 }
 
-void Download::StartDownload( QUrl url,
-                         QFile* _file,
-                         qint64 _startBytes,
-                         qint64 _endBytes,
-                         QMutex* _mutex)
+void Download::StartDownload()
 {
-    if( _file == NULL ){
+    if( file == NULL ){
         qDebug()<<"file is  not created!";
         return;
     }
 
-
+    timer = new QTimer;
+    timer->start(990);
 
     qDebug()<<"Thread "<<Thread_ID <<" start downloading.";
 
-    startBytes = _startBytes;
-    endBytes   = _endBytes;
-    file       = _file;
-    mutex      = _mutex;
-    leftSize   = endBytes - startBytes;
-
-    //这里不能加this，因为这个对象将会在从线程里被创建，而当前对象是在主线程里被创建的，跨线程指定父子关系，程序会报警。
-    //manager = new QNetworkAccessManager(this);
     manager = new QNetworkAccessManager();
 
     QNetworkRequest qheader;
@@ -66,25 +110,20 @@ void Download::StartDownload( QUrl url,
     //qDebug() << "Download -->Thread " <<Thread_ID << " StartDownload().";
 }
 
-
 void Download:: updateSpeed(){
     speed = newSize - oldSize;
     oldSize = newSize;
 }
 
-void Download::sendSpeed_leftSize(pair_2int64 &_pair,int i){
-    if(i == Thread_ID){
+void Download::sendSpeed_leftSize(pair_2int64 &_pair){
         pair.first = speed;
         pair.second = leftSize;
         _pair = pair;
         return ;
-    }
-    else{
-        return ;
-    }
 }
 
 void Download::httpFinished(){
+
     file->flush();
     speed = leftSize = 0;
     reply->deleteLater();
@@ -99,7 +138,6 @@ void Download::httpFinished(){
 void Download::httpReadyRead(){
     if ( !file )
         return;
-
 
      buffer = reply->readAll();
      /****************************/
@@ -118,8 +156,8 @@ void Download::httpReadyRead(){
 
 void Download::getMessage(qint64 & _startPoint, qint64 & _newSize, qint64 &_endPoint){
     _startPoint = startBytes;
-    _newSize = newSize;
-    _endPoint = endBytes;
+    _newSize    = newSize;
+    _endPoint   = endBytes;
 }
 
 
