@@ -25,14 +25,19 @@ public:
     enum State{Waiting,Downloading,Pause,Stop,Finished};
 
     //DownloadControl(MainWindow * _window,QObject * parent);
-     DownloadControl(QObject *parent = 0, int _TASK_ID = 0);
+     DownloadControl(QObject *parent,
+                     int _TASK_ID,
+                     QFile *_configFile,
+                     QUrl _url,
+                     QString filename,
+                     QString dir);
      ~DownloadControl();
 
      //开始下载
-    void DownloadFile(QUrl url, QString saveFile, int _ThreadNum, QString dir, QFile *_configFile);
+    void  DownloadFile(int _ThreadNum);
 
     //通过配置文件继续下载
-    void DownloadFile(QString *configFile);
+    void DownloadFile(void);
 
 
     qint64 GetFileSize(QUrl url,int tryTimes); //获取下载链接大小
@@ -44,9 +49,9 @@ public:
     void pause();         //暂停下载
     void startAgain();    //继续下载
 
-    //void DelFrom_ConfigFile();    //下载完成后自动从配置文件删除任务信息
-    void Write_To_ConfigFile();   //点击暂停后，将当前任务信息更新到配置文件中。
-    //void Read_From_ConfigFile();  //点击继续下载后，从配置文件读取当前任务的信息，为继续下载做准备。
+    bool DelFrom_ConfigFile();    //下载完成后自动从配置文件删除任务信息
+    bool Write_To_ConfigFile();   //点击暂停后，将当前任务信息更新到配置文件中。
+    bool Read_From_ConfigFile();  //点击继续下载后，从配置文件读取当前任务的信息，为继续下载做准备。
 
 
     pair_2int64 pair;
@@ -59,13 +64,13 @@ private:
     qint64 readySize,totalSize,leftSize;
     qint64 speed,time_left;
     QUrl url;
-    QString saveFile;
+    QString saveFile;            //文件名
     int ThreadNum,RunningThread; //线程数量
     QTimer *timer;          //1s的定时测速器
     QTimer *timer_15s;      //超时15s则出现网络异常，则暂停下载。
     MainWindow * window;
-    QFile *file;
-    QFile * configFile; //配置文件的文件指针。
+    QFile *file;        //下载文件的文件对象指针
+    QFile * configFile; //配置文件的文件对象指针
     State state;
     int Thread_Finished_Num;
     QVector<Download*> threads;

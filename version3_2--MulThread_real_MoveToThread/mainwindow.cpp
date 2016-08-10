@@ -16,8 +16,20 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    /*****************************************/
     ui->setupUi(this);
-    /******************************************************************************/
+    Task_ID = 0;
+    dow = NULL;
+    timer = new QTimer(this);
+    timer->start(1000);
+    downloading_layout = new QVBoxLayout();
+    Finished_layout = new QVBoxLayout();
+    Trash_layout = new QVBoxLayout();
+    //分别给正在下载、下载完成、回收站设置垂直布局
+    ui->tab_1->setLayout(downloading_layout);
+    ui->tab_2->setLayout(Finished_layout);
+    ui->tab_3->setLayout(Trash_layout);
+    /****************************************/
     //获取当前工程的目录，再此检测是否存在配置文件。
     QString dir = QCoreApplication::applicationDirPath();
     qDebug()<<"dir :"<<dir;
@@ -38,12 +50,13 @@ MainWindow::MainWindow(QWidget *parent) :
         configFile->close();
     }
 
-    else{ //配置文件存在，则读取所有未下载完的任务状态信息。加载到界面上。
+    else
+    {  //配置文件存在，则读取所有未下载完的任务状态信息。加载到界面上。
 
         qDebug()<<"Download.config exist! ";
         configFile=new QFile(fulpath);
         //调试：输出配置文件全部内容
-        if(!configFile->open(QFile::ReadWrite |QFile::Append|QFile::Text))
+        if(!configFile->open(QFile::ReadOnly |QFile::Text))
         {
             QString errorInfo = "can not open file : " + configFile->errorString();
             configFile->close();
@@ -51,8 +64,6 @@ MainWindow::MainWindow(QWidget *parent) :
             qDebug()<<"Open file error!"<<errorInfo;
             return ;
         }
-        //采用追加模式，文件指针已经被定位到了文件尾部，所以需要手动定位文件指针，指向文件开始位置。
-        configFile->seek(0);
         /*****************加载任务信息到界面，方便继续下载****************/
 
         QTextStream txtInput(configFile);
@@ -66,26 +77,87 @@ MainWindow::MainWindow(QWidget *parent) :
             qDebug() << strread ;
         }
         configFile->close();
+
+        /********************加载配置文件内容到主界面****************************/
+        QString strAll;
+        QStringList strList;
+        QString _url;
+        QString _fileDir;
+        int Thread_Num;
+        bool isExist = false;
+        if(!configFile->open(QFile::ReadOnly|QFile::Text))//打开配置文件,读取所有信息到 缓冲字符串strAll
+        {  //打开文件失败
+            QString errorInfo =configFile->errorString();
+            configFile->close();
+            configFile = NULL;
+            qDebug()<<"Open file error in Change_ConfigFile() :"<<errorInfo;
+            return ;
+        }
+        //打开文件成功
+        QTextStream stream(configFile);
+        strAll = stream.readAll();
+        //读取完关闭文件，因为信息已经被保存到了变量中
+        configFile->close();
+
+
+/*****************************************************************************************************/
+        strList = strAll.split("\n");
+        for(int i =0;i<strList.count();i++)
+        {
+            if(strList.at(i).contains("http://",Qt::CaseInsensitive))
+            {
+                _url = strList.at(i);
+                i++;//跳转到下一行，下一行内容为线程数。
+                _fileDir = strList.at(i);//读取文件路径串
+
+
+
+                for(int j = 0;j<Thread_Num;j++) //每一个线程都有三条数据（开始点，已下载量，结束点）
+                {
+
+                    //读取每一个线程的三个数据，再将它们写入文件
+                    tempStr=strList.at(i+j*3+1);
+                    startPoint = tempStr.toInt();
+                    tempStr=strList.at(i+j*3+2);
+                    startBytes = tempStr.toLongLong();
+                    tempStr=strList.at(i+j*3+3);
+                    totalSize = tempStr.toLongLong();
+
+                }
+                i =i + Thread_Num*3 ;
+            }
+        }
+        if(isExist == false){
+            return ;
+        }
+        QUrl url(_url);
+        QFileInfo info(url.path());
+        QString fileName(info.fileName());
+        file = new QFile(fileName);
+
+        ShowProgressBar();
+        upDateProgressBar(startBytes,totalSize);
+
+        fd = new QFileDownload(url,startBytes,this,configFile,file);
+
+
+
+
+        /*********************************************************************/
+
+
+
+
         qDebug()<<"-----All_Downloading_Message -----\n";
         //调试：配置文件内容输出完毕
+    }
 
     /************************************************************************************/
 
-    }
 
 
-    Task_ID = 0;
-    dow = NULL;
-    timer = new QTimer(this);
-    timer->start(1000);
-    downloading_layout = new QVBoxLayout();
-    Finished_layout = new QVBoxLayout();
-    Trash_layout = new QVBoxLayout();
 
-    //分别给正在下载、下载完成、回收站设置垂直布局
-    ui->tab_1->setLayout(downloading_layout);
-    ui->tab_2->setLayout(Finished_layout);
-    ui->tab_3->setLayout(Trash_layout);
+
 
 }
 
@@ -238,7 +310,7 @@ void MainWindow::on_pushButton_clicked()
 
 
     //任务编号，Task_ID,从0开始编号，每增加一个任务，编号+1 .
-    dow = new DownloadControl(this,Task_ID);
+    dow = new DownloadControl(this,Task_ID,configFile,url,fileName,dir);
 
     //把新任务的下载管理器指针与状态栏指针都保存到一个pair对象中。
     pair.first = dow;
@@ -251,8 +323,8 @@ void MainWindow::on_pushButton_clicked()
 
     downloading_layout->addWidget(&(pair.second->widget));
 
-    //开启下载管理器
-    dow->DownloadFile(url,fileName,5,dir,configFile);
+    //开启下载管理器，启用五个线程进行下载
+    dow->DownloadFile(5);
 
     //下载管理器完成任务，发送信号表示已完成文件的下载
     connect(dow,SIGNAL(FileDownloadFinished(QString,int,qint64,QString)),
