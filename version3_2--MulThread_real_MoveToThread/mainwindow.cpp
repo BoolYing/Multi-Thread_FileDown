@@ -33,10 +33,11 @@ MainWindow::MainWindow(QWidget *parent) :
     //获取当前工程的目录，再此检测是否存在配置文件。
     QString dir = QCoreApplication::applicationDirPath();
     qDebug()<<"dir :"<<dir;
-    QString fulpath;
-    fulpath = dir +"/"+ "Download.config";
+    QString fulpath = dir +"/"+ "Download.config";
     QFileInfo fi(fulpath);
-    if(!fi.isFile()){ //如果配置文件不存在，则创建配置文件。
+
+    if(!fi.isFile())
+    {  //如果配置文件不存在，则创建配置文件。
         qDebug()<<"Download.config not exist. ";
         configFile = new QFile(fulpath);
         if(!configFile->open(QFile::ReadWrite  |QFile::Text))
@@ -78,13 +79,19 @@ MainWindow::MainWindow(QWidget *parent) :
         }
         configFile->close();
 
+        qDebug()<<"-----All_Downloading_Message -----\n";
+        //调试：配置文件内容输出完毕
+
         /********************加载配置文件内容到主界面****************************/
         QString strAll;
         QStringList strList;
         QString _url;
         QString _fileDir;
+        qint64 startPoint,newSize,endPoint;
+        qint64 totalSize = 0;
+        qint64 leftSize = 0;
         int Thread_Num;
-        bool isExist = false;
+  /****************************************************************************************/
         if(!configFile->open(QFile::ReadOnly|QFile::Text))//打开配置文件,读取所有信息到 缓冲字符串strAll
         {  //打开文件失败
             QString errorInfo =configFile->errorString();
@@ -100,45 +107,74 @@ MainWindow::MainWindow(QWidget *parent) :
         configFile->close();
 
 
-/*****************************************************************************************************/
+
         strList = strAll.split("\n");
         for(int i =0;i<strList.count();i++)
         {
             if(strList.at(i).contains("http://",Qt::CaseInsensitive))
             {
-                _url = strList.at(i);
+                _url = strList.at(i);//读取url
                 i++;//跳转到下一行，下一行内容为线程数。
                 _fileDir = strList.at(i);//读取文件路径串
-
-
+                i++;
+                QString tempStr = strList.at(i);
+                Thread_Num = tempStr.toInt();//读取线程数
 
                 for(int j = 0;j<Thread_Num;j++) //每一个线程都有三条数据（开始点，已下载量，结束点）
                 {
-
                     //读取每一个线程的三个数据，再将它们写入文件
                     tempStr=strList.at(i+j*3+1);
-                    startPoint = tempStr.toInt();
+                    startPoint = tempStr.toLongLong();
                     tempStr=strList.at(i+j*3+2);
-                    startBytes = tempStr.toLongLong();
+                    newSize = tempStr.toLongLong();
                     tempStr=strList.at(i+j*3+3);
-                    totalSize = tempStr.toLongLong();
-
+                    endPoint = tempStr.toLongLong();
+                    leftSize += (endPoint - startPoint - newSize); //得到文件未下载部分的大小
                 }
-                i =i + Thread_Num*3 ;
-            }
-        }
-        if(isExist == false){
-            return ;
-        }
-        QUrl url(_url);
-        QFileInfo info(url.path());
-        QString fileName(info.fileName());
-        file = new QFile(fileName);
+                i =i + Thread_Num*3;
 
-        ShowProgressBar();
-        upDateProgressBar(startBytes,totalSize);
+                QUrl url(_url);
+                QFileInfo info(url.path());
+                QString fileName(info.fileName());
 
-        fd = new QFileDownload(url,startBytes,this,configFile,file);
+                //任务编号，Task_ID,从0开始编号，每增加一个任务，编号+1 .
+                dow = new DownloadControl(this,Task_ID,configFile,url,fileName,_fileDir);
+                bool to =dow->Read_From_ConfigFile();
+                if(to == false){
+                    qDebug()<<"pause error!!! some file open error~";
+                    return;
+                }
+
+                //把新任务的下载管理器指针与状态栏指针都保存到一个pair对象中。
+                pair.first = dow;
+
+                pair.second = new ProgressTools(this,Task_ID,dow);
+                pair.second->pauseDownload.setText("继续下载");
+                pair.second->status = 1;
+
+                Task_ID++;
+
+                //将pair添加到任务列表里去。
+                task.append(pair);
+                //在tab_1中添加当前新建下载任务的状态栏。
+                downloading_layout->addWidget(&(pair.second->widget));
+                //由于是继续以前未完成的下载任务，所以调用无参数版的 DownloadFile()
+
+                totalSize = GetFileSize(url,3); //得到文件全部文件大小
+
+                //下载管理器完成任务，发送信号表示已完成文件的下载
+
+                connect(dow,SIGNAL(FileDownloadFinished(QString,int,qint64,QString)),
+                        this,SLOT(TaskFinished(QString,int,qint64,QString)));
+                //下载管理器通过信号来更新它的状态栏。
+                connect(dow,SIGNAL(send_Ui_Msg(int,QString,qint64,qint64,QString,QString)),
+                        this,SLOT(upDateUI(int,QString,qint64,qint64,QString,QString)));
+
+                upDateUI(Task_ID-1,fileName,totalSize-leftSize,totalSize,QString("0 K/s"),QString(""));
+
+             }
+        }
+
 
 
 
@@ -148,15 +184,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
-        qDebug()<<"-----All_Downloading_Message -----\n";
-        //调试：配置文件内容输出完毕
     }
 
     /************************************************************************************/
-
-
-
-
 
 
 }
@@ -309,6 +339,7 @@ void MainWindow::on_pushButton_clicked()
 
 
 
+
     //任务编号，Task_ID,从0开始编号，每增加一个任务，编号+1 .
     dow = new DownloadControl(this,Task_ID,configFile,url,fileName,dir);
 
@@ -340,11 +371,16 @@ void MainWindow::on_pushButton_clicked()
 void MainWindow::TaskFinished(QString _filename,int _task_id,qint64 _totalSize,QString _path){
     qDebug()<<_path<<_filename<<"下载完成 !";
     //qDebug()<<"file path  :"<<_path;
-    disconnect(dow,SIGNAL(send_Ui_Msg(int,QString,qint64,qint64,QString,QString)),
+    int i;
+    for(i =0;i<task.length();i++){
+        if(task[i].first->TASK_ID == _task_id)
+            break;
+    }
+    disconnect(task[i].first,SIGNAL(send_Ui_Msg(int,QString,qint64,qint64,QString,QString)),
             this,SLOT(upDateUI(int,QString,qint64,qint64,QString,QString)));
 
     //将已经下载完成的任务的状态栏，从正在下载界面隐藏。
-    hideAll(_task_id);
+    hideAll(i);
 
 
    // ui->tab_2->show();
@@ -381,8 +417,8 @@ void MainWindow::hideAll(int id){
 }
 
 */
-void MainWindow::hideAll(int id){
-    ProgressTools * tools=task[id].second;
+void MainWindow::hideAll(int i){
+    ProgressTools * tools=task[i].second;
 /*
     tools->bar.hide();
 
@@ -412,10 +448,15 @@ void MainWindow::upDateUI(int Task_ID,
                QString speed,
                QString lefttime)
  {
-     int id = Task_ID;
-     ProgressTools * tools;
+
+    int i ;
+    for(i =0;i<task.length();i++){
+        if(task[i].second->task_ID == Task_ID)
+            break;
+    }
+    ProgressTools * tools;
      //指向Task_ID对应的那个状态栏
-     tools = task[id].second;
+     tools = task[i].second;
      //更新进度条、文件名、速度与剩余时间
      tools->bar.setMaximum(totalSize);
      tools->bar.setValue(readSize);
@@ -425,6 +466,51 @@ void MainWindow::upDateUI(int Task_ID,
 
  }
 
+qint64 MainWindow::GetFileSize(QUrl url, int tryTimes){
+    qint64 size = -1;
 
+    //尝试tryTimes次
+    while(tryTimes --)
+    {
+        QNetworkAccessManager manager;
+        QEventLoop loop;
+        //发出请求，获取目标地址的头部信息
+        QNetworkReply *reply = manager.head(QNetworkRequest(url));
+        if(!reply)continue;
 
+        connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+        loop.exec();
+
+        if(reply->error() != QNetworkReply::NoError)
+        {
+            QString errorInfo = reply->errorString();
+            qDebug()<<errorInfo;
+            continue;
+        }
+        QVariant var = reply->header(QNetworkRequest::ContentLengthHeader);
+        reply->deleteLater();
+        size = var.toLongLong();
+        break;
+    }
+    return size;
+}
+bool MainWindow::Space_enough()
+{
+ /*   std::string path=_fileName.toStdString();
+    std::string rootName(path.begin(),path.begin()+3);
+    QString name(rootName.c_str());
+
+    LPCWSTR lpcwstrDriver=(LPCWSTR)name.utf16();
+    ULARGE_INTEGER liFreeBytesAvailable, liTotalBytes, liTotalFreeBytes;
+    if( !GetDiskFreeSpaceEx( lpcwstrDriver, &liFreeBytesAvailable, &liTotalBytes, &liTotalFreeBytes) )
+    {
+           qDebug() << "ERROR: Call to GetDiskFreeSpaceEx() failed.";
+           return 0;
+    }
+    qDebug()<<"freespace:"<<(quint64)liTotalFreeBytes.QuadPart<<endl;
+    return (quint64)liTotalFreeBytes.QuadPart / (quint64)_fileSize;   //返回0无空间  返回1有空间
+    */
+
+    return true;
+}
 

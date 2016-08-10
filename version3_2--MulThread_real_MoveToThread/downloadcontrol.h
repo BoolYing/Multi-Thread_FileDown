@@ -22,7 +22,6 @@ class DownloadControl:public QObject
 {
     Q_OBJECT
 public:
-    enum State{Waiting,Downloading,Pause,Stop,Finished};
 
     //DownloadControl(MainWindow * _window,QObject * parent);
      DownloadControl(QObject *parent,
@@ -71,11 +70,12 @@ private:
     MainWindow * window;
     QFile *file;        //下载文件的文件对象指针
     QFile * configFile; //配置文件的文件对象指针
-    State state;
+
     int Thread_Finished_Num;
     QVector<Download*> threads;
     QString errorInfo;
     QMutex *mutex;
+
 
     QString FileDir;
 

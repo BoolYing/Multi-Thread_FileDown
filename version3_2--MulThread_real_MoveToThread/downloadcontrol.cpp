@@ -10,7 +10,7 @@ DownloadControl::DownloadControl(QObject *parent,
     Thread_Finished_Num = 0;
     speed = time_left = 0;
     totalSize = readySize = leftSize =0;
-    state = Waiting;
+
     file = NULL;
     configFile = _configFile;
     url = _url;
@@ -20,6 +20,7 @@ DownloadControl::DownloadControl(QObject *parent,
     mutex = new QMutex;
     //初始化当前下载管理器的任务编号.
     TASK_ID = _TASK_ID;
+
 }
 
 DownloadControl::~DownloadControl(){
@@ -57,9 +58,8 @@ void DownloadControl::DownloadFile(int _ThreadNum)
         return ;
     }
     //将dir保存起来，在下载完成后将当做信号参数进行传递。
-    QString dir = FileDir;
-    dir = dir + "/"+ saveFile;
-    file = new QFile(dir);
+    QString fulPath = FileDir+ "/"+ saveFile;
+    file = new QFile(fulPath);
     if(!file->open(QFile::WriteOnly | QFile::Append))
     {
         errorInfo = "can not open file : \n" + file->errorString();
@@ -118,7 +118,8 @@ void DownloadControl::DownloadFile(int _ThreadNum)
  //通过配置文件继续下载
 void DownloadControl::DownloadFile(void){
 
-    QString fulpath = FileDir+ '/' +saveFile;
+    totalSize = GetFileSize(url,3);
+    QString fulpath = FileDir+ "/" +saveFile;
     file = new QFile(fulpath);
     qDebug()<<"DownloadFile(void)-> ThreadNum :" <<ThreadNum;
     qDebug()<<"DownloadFile(void)-> url       :" <<url.toString();
@@ -134,7 +135,7 @@ void DownloadControl::DownloadFile(void){
         return ;
     }
     //重置文件大大小为totalSize
-    file->resize(totalSize);
+     file->resize(totalSize);
     //threads是一个 vector<Download *> ，存放当前任务的各个线程的进度
     //清空threads
      threads.clear();
@@ -161,7 +162,7 @@ void DownloadControl::DownloadFile(void){
          thread->start();
 
          connect(thread, SIGNAL(started()),download, SLOT(StartDownload()));
-         connect(download,SIGNAL(Finished_Thread()),thread,SLOT(quit()));
+         //connect(download,SIGNAL(Finished_Thread()),thread,SLOT(quit()));
          connect(download,SIGNAL(Finished_Thread()),this,SLOT(SubPartFinished()));
          connect(thread,SIGNAL(finished()),this,SLOT(PrintThreadEnd()));
 
@@ -200,7 +201,7 @@ void DownloadControl::pause(){
     emit pause_Sig();//发送暂停信号，每一个线程都会接收到它
 
     timer->stop();   //暂停计时器
-    delete timer;
+    //delete timer;
 
     for(int i =0;i<ThreadNum;i++){
         threads[i]->getMessage(startArray[i],newArray[i],endArray[i]);
@@ -240,11 +241,7 @@ void DownloadControl::startAgain(){
     }
 
     /***********************************************************************/
-
-
-
     DownloadFile();
-
 
 }
 
@@ -288,6 +285,7 @@ void DownloadControl::SubPartFinished()
     //如果完成数等于文件段数，则说明文件下载完毕，关闭文件，发射信号
     if( Thread_Finished_Num == ThreadNum )
     {
+        emit pause_Sig();
         file->close();
         timer->stop();
         qDebug() << "DownloadControl::SubPartFinished()--> Download finished";
@@ -296,13 +294,17 @@ void DownloadControl::SubPartFinished()
         QString str2("下载完成");
         emit send_Ui_Msg(TASK_ID,saveFile,totalSize,totalSize,str1,str2);
         //delete this;
-        /**************************************/
+        for(int i = 0;i<ThreadNum;i++)
+            threads[i]->deleteLater();
+        threads.clear();
+
+        /*****************删除配置文件中与此任务相关的信息********************/
         bool to =DelFrom_ConfigFile();
         if(to == false){
             qDebug()<<"pause error!!! some file open error~";
             return;
         }
-        /**************************************/
+        /****************************************************************/
     }
 }
 

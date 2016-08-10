@@ -67,11 +67,12 @@ void Download::Thread_pauseDownload(){
     mutex->unlock();
     */
 
-
+/*
     qDebug()<< "Thread_pauseDownload() -->"<<"Thread id :"<<Thread_ID
             <<"\nStartByets:" <<startBytes
             <<"\nnewSize   :"<<newSize
             <<"\nendBytes  :"<<endBytes;
+            */
     emit quitThread();
 
 }

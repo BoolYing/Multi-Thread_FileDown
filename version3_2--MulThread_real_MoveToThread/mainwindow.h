@@ -21,6 +21,7 @@
 #include<QSpacerItem>
 #include<QFileDialog>
 #include<QDesktopServices>
+#include<string>
 
 
 namespace Ui {
@@ -65,7 +66,6 @@ public:
     QHBoxLayout  d_layout;
     QHBoxLayout  f_layout;
     QHBoxLayout  t_layout;
-private:
     int status; //按钮状态
 signals:
     void pause_signal();//暂停下载信号
@@ -107,6 +107,7 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     void hideAll(int);
+    qint64 GetFileSize(QUrl url,int tryTimes);
 
     //任务列表，保存下载任务的状态。
     QVector<taskPair> task;
@@ -114,11 +115,14 @@ public:
     //保存完成任务的列表
     QVector<FinishedTools*> task_finish;
 
+    bool Space_enough();
+
     //垃圾箱列表
 
 private slots:
     void on_pushButton_clicked();
-    void TaskFinished(QString,int,qint64,QString);
+     void TaskFinished(QString,int,qint64,QString);
+
 
     void upDateUI(int,QString,qint64,qint64,QString,QString);
 
