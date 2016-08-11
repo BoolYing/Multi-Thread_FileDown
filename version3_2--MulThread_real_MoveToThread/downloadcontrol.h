@@ -58,6 +58,7 @@ public:
 
 
 
+
 private:
     //QNetworkAccessManager *manager;
     qint64 readySize,totalSize,leftSize;
@@ -89,7 +90,7 @@ private:
 
 signals:
     //下载完成会发送这个信号，将任务从正在下载界面，挪到下载完成界面。
-    void FileDownloadFinished(QString saveFile,int TASK_ID,qint64 totalSize,QString path);
+    void FileDownloadFinished(QString saveFile,int TASK_ID,qint64 totalSize,QString path,QUrl url);
 
     //每一个任务都有一个相对应的进度栏，包括进度条，文件名，下载速度，剩余时间等。
     //这个信号用来传递参数去更新状态栏。

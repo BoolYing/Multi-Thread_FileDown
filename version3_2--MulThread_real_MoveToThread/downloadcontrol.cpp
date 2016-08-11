@@ -18,9 +18,9 @@ DownloadControl::DownloadControl(QObject *parent,
     FileDir = _FileDir;
     ThreadNum = 0;
 
-  //  mutex = new QMutex;
     //初始化当前下载管理器的任务编号.
     TASK_ID = _TASK_ID;
+    //为了调试创建的互斥锁
     lock_for_Count_of_exit_thread = new QMutex;
 
 }
@@ -44,9 +44,7 @@ QString DownloadControl::errorString()
 
 void DownloadControl::DownloadFile(int _ThreadNum)
 {
-    startArray[50] = {0};
-    newArray[50]   = {0} ;
-    endArray[50]   = {0};
+
     if(file != NULL)
     {
         qDebug()<<" error file";
@@ -340,7 +338,7 @@ void DownloadControl::SubPartFinished()
         }
         timer->stop();
         qDebug() << "SubPartFinished()-->All Part finished!";
-        emit FileDownloadFinished(saveFile,TASK_ID,totalSize,FileDir);
+        emit FileDownloadFinished(saveFile,TASK_ID,totalSize,FileDir,url);
         /*下载完成会直接隐藏，不需要显示“下载完成”
         QString str1("");
         QString str2("下载完成");
@@ -511,8 +509,7 @@ bool DownloadControl::Read_From_ConfigFile(){
     strList = strAll.split("\n");
     for(int i =0;i<strList.count();i++)
     {
-        if(strList.at(i).contains(url.toString())&&
-                strList.at(i+1).contains(FileDir))
+        if((strList.at(i) == url.toString())&&(strList.at(i+1) == FileDir))
         {//如果匹配到了url与目标路径都符合的条目，则读取下边的内容。
             i+=2;//跳转到下下一行，下下一行内容为线程数。
             QString tempStr = strList.at(i);//读取线程数存到字符串
@@ -573,8 +570,7 @@ bool DownloadControl::DelFrom_ConfigFile(){
             }
             else
             {
-                if(strList.at(i).contains(url.toString())&&
-                        strList.at(i+1).contains(FileDir))
+                if((strList.at(i) == url.toString())&&(strList.at(i+1) == FileDir))
                 {//如果匹配到了url与目标路径都符合的条目，则删除这个任务的一切信息。
                     i += 2;//跳转到下下一行，下下一行内容为线程数。
                     QString tempStr = strList.at(i);//读取线程数存到字符串

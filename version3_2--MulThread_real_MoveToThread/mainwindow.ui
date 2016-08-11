@@ -58,7 +58,7 @@
    <widget class="QLineEdit" name="lineEdit_2">
     <property name="geometry">
      <rect>
-      <x>740</x>
+      <x>760</x>
       <y>530</y>
       <width>71</width>
       <height>21</height>
@@ -75,7 +75,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>新任务线程数：</string>
+     <string>指定线程数量：</string>
     </property>
    </widget>
    <widget class="QWidget" name="">

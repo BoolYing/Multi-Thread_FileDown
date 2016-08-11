@@ -24,11 +24,11 @@ MainWindow::MainWindow(QWidget *parent) :
     timer->start(1000);
     downloading_layout = new QVBoxLayout();
     Finished_layout = new QVBoxLayout();
-    Trash_layout = new QVBoxLayout();
+    Recycle_layout = new QVBoxLayout();
     //分别给正在下载、下载完成、回收站设置垂直布局
     ui->tab_1->setLayout(downloading_layout);
     ui->tab_2->setLayout(Finished_layout);
-    ui->tab_3->setLayout(Trash_layout);
+    ui->tab_3->setLayout(Recycle_layout);
     /****************************************/
     //获取当前工程的目录，再此检测是否存在配置文件。
     QString dir = QCoreApplication::applicationDirPath();
@@ -195,7 +195,7 @@ MainWindow::~MainWindow()
 {
     delete downloading_layout;
     delete Finished_layout;
-    delete Trash_layout;
+    delete Recycle_layout;
 
     delete ui;
 }
@@ -299,7 +299,8 @@ FinishedTools::FinishedTools(QObject *parent):QObject(parent)
 
     connect(&(this->LookInDir),SIGNAL(clicked(bool)),this,SLOT(LookFileInDir()));
 
-    connect(&(this->delFile),SIGNAL(clicked(bool)),this,SLOT(RemoveFiles()));
+    //点击删除，删除文件的同时将任务信息从下载完成界面挪到回收站界面，
+    connect(&(this->delFile),SIGNAL(clicked(bool)),this,SLOT(Remove_to_Recycle()));
 }
 //在目录中查看文件
 void FinishedTools::LookFileInDir(){
@@ -313,34 +314,123 @@ void FinishedTools::LookFileInDir(){
     }
 
     else{
+        //打开路径指向的目录
         QDesktopServices::openUrl(QUrl(this->path, QUrl::TolerantMode));
     }
 }
 //一键删除文件
-void FinishedTools::RemoveFiles(){
-    QString fulpath;
-    fulpath = this->path +"/"+ this->filename.text();
+void FinishedTools::Remove_to_Recycle(){
+     QString fulpath;
+     fulpath = this->path +"/"+ this->filename.text();
      QFile::remove(fulpath);//刪除文件
+     widget.hide();
+     //向MainWindow类发送一个传参数的信号。
+     emit moveToRecycle(url,path,file_Name,total_size);
+
 }
 
+RecycleTools::RecycleTools(QObject *parent):QObject(parent){
+    reloadButton.setText("重新下载");
+    destoryButton.setText("彻底删除");
+    layout.addWidget(&filename);
+    layout.addWidget(&totalSize);
+    layout.addWidget(&reloadButton);
+    layout.addWidget(&destoryButton);
+
+    connect(&reloadButton,SIGNAL(clicked(bool)),this,SLOT(reloadDownloading()));
+    connect(&destoryButton,SIGNAL(clicked(bool)),this,SLOT(thoroughDestory()));
+}
+void RecycleTools::reloadDownloading(){
+    emit reload_Dow(url,path);
+
+}
+void RecycleTools::thoroughDestory(QFile *Recycle_configFile){
+    this->widget.hide();
+    QFile *configFile = Recycle_configFile;
+    //从回收站配置文件删除这个任务的信息。
+}
+void MainWindow::Reload_Downloading(QUrl _url, QString _path){
+    int threadnum;
+    if(ui->lineEdit_2->text().isEmpty())
+    {
+        QMessageBox::warning(this,tr("警告"),tr(" \n请在下方输入下载需要开辟的线程数\n"),QMessageBox::Yes);
+        return ;
+    }
+    else
+    {
+        threa_dnum = ui->lineEdit_2->text().toInt();
+        if(threadnum <1){
+        QMessageBox::warning(this,tr("警告"),tr(" \nThread Num must more than 1 !"),QMessageBox::Yes);
+        ui->lineEdit_2->clear();
+        return ;
+        }
+        if(threadnum >100){
+        QMessageBox::warning(this,tr("警告"),tr(" \n Don't more than 100"),QMessageBox::Yes);
+        ui->lineEdit_2->clear();
+        return ;
+        }
+    }
+
+
+     //判断任务是否重复
+    //判断磁盘空间是否足够
+
+
+}
 
 //新建下载任务
 void MainWindow::on_pushButton_clicked()
 {
+    if(ui->lineEdit->text().isEmpty()){
+        QMessageBox::warning(this,tr("警告"),tr(" \n请输入下载链接\n"),QMessageBox::Yes);
+        return;
+    }
 
-    QUrl url= ui->lineEdit->text();
+    QUrl url= ui->lineEdit->text();    
     QFileInfo info(url.path());
-    QString dir = QFileDialog::getExistingDirectory();
-    qDebug()<< "path :"<<dir;
     QString fileName(info.fileName());
+    //求取线程数
+    int threadnum;
+    if(ui->lineEdit_2->text().isEmpty())
+    {
+        QMessageBox::warning(this,tr("警告"),tr(" \n请在下方输入下载需要开辟的线程数\n"),QMessageBox::Yes);
+        return ;
+    }
+    else
+    {
+        threadnum = ui->lineEdit_2->text().toInt();
+        if(threadnum <1){
+        QMessageBox::warning(this,tr("警告"),tr(" \nThread Num must more than 1 !"),QMessageBox::Yes);
+        ui->lineEdit_2->clear();
+        return ;
+        }
+        if(threadnum >100){
+        QMessageBox::warning(this,tr("警告"),tr(" \n Don't more than 100"),QMessageBox::Yes);
+        ui->lineEdit_2->clear();
+        return ;
+        }
+    }
 
 
+    QString dir = QFileDialog::getExistingDirectory();
+    if(dir.isEmpty()){
+        QMessageBox::warning(this,tr("警告"),tr(" \n 请选择下载路径\n"),QMessageBox::Yes);
+        return ;
+    }
+    qDebug()<< "path :"<<dir;
+
+
+
+
+
+    //判断任务是否重复
     if(findExistTask(url,dir) == true){ //如果存在重复任务，则拒绝下载。
         qDebug()<<"This task is exist,dont need to download .";
         QMessageBox::warning(this,tr("提示"),tr(" \n 任务已经存在，无需下载\n"),QMessageBox::Yes);
         return ;
     }
 
+    //判断磁盘空间是否足够
     qint64 totalSize = GetFileSize(url,3);
     bool DiskSpace = Space_enough(totalSize,dir);
     if(DiskSpace == false){
@@ -367,12 +457,12 @@ void MainWindow::on_pushButton_clicked()
     downloading_layout->addWidget(&(pair.second->widget));
 
     //开启下载管理器，启用五个线程进行下载
-    dow->DownloadFile(5);
+    dow->DownloadFile(threadnum);
 
 
     //下载管理器完成任务，发送信号表示已完成文件的下载
-    connect(dow,SIGNAL(FileDownloadFinished(QString,int,qint64,QString)),
-            this,SLOT(TaskFinished(QString,int,qint64,QString)));
+    connect(dow,SIGNAL(FileDownloadFinished(QString,int,qint64,QString,QUrl)),
+            this,SLOT(TaskFinished(QString,int,qint64,QString,QUrl)));
 
 
 
@@ -380,11 +470,12 @@ void MainWindow::on_pushButton_clicked()
     connect(dow,SIGNAL(send_Ui_Msg(int,QString,qint64,qint64,QString,QString)),
             this,SLOT(upDateUI(int,QString,qint64,qint64,QString,QString)));
 }
-
-void MainWindow::TaskFinished(QString _filename,int _task_id,qint64 _totalSize,QString _path){
+//一个下载任务彻底完成，会触发这个槽函数。
+void MainWindow::TaskFinished(QString _filename,int _task_id,qint64 _totalSize,QString _path,QUrl url){
     qDebug()<<_path<<_filename<<"下载完成 !";
     //qDebug()<<"file path  :"<<_path;
     int i;
+    //找到这个下载任务对应的状态栏的编号。
     for(i =0;i<task.length();i++){
         if(task[i].first->TASK_ID == _task_id)
             break;
@@ -392,23 +483,46 @@ void MainWindow::TaskFinished(QString _filename,int _task_id,qint64 _totalSize,Q
     disconnect(task[i].first,SIGNAL(send_Ui_Msg(int,QString,qint64,qint64,QString,QString)),
             this,SLOT(upDateUI(int,QString,qint64,qint64,QString,QString)));
 
-    //将已经下载完成的任务的状态栏，从正在下载界面隐藏。
+    //将已经下载完成的任务所对应的状态栏，从正在下载界面隐藏。
     hideAll(i);
 
 
-   // ui->tab_2->show();
     FinishedTools *tools = new FinishedTools(this);
-    task_finish.append(tools);
+    tools->url = url;
+    tools->file_Name = _filename;
+    tools->total_size = _totalSize;
+    tools->path = _path;
     tools->filename.setText(_filename);
     tools->totalSize.setText(QString::number(_totalSize/1024)+ QString("Kb"));
-    tools->path = _path;    
 
+    //当传递参数的信号被发送时，调用MainWindow类的槽函数去创建一个回收站状态栏对象。
+    connect(tools,SIGNAL(moveToRecycle(QUrl,QString,QString,qint64)),
+            this,SLOT(Move_To_Recycle(QUrl,QString,QString,qint64)));
+
+    //将这个对象的指针加入下载完成任务的队列，结束时可以析构掉。
+    task_finish.append(tools);
 
     //在下载完成界面中，添加任务状态。
-    Finished_layout->addLayout(&(tools->layout));
+    Finished_layout->addWidget(&(tools->widget));
     qDebug()<<"Finished_layout->addLayout(&(tools->layout)) ok !";
 
 }
+void MainWindow::Move_To_Recycle(QUrl _url, QString _path, QString _filename, qint64 _totalSize){
+    //创建一个回收站状态栏
+    RecycleTools * tools = new RecycleTools(this);
+    tools->file_Name = _filename;
+    tools->path = _path;
+    tools->total_size = _totalSize;
+    tools->url = _url;
+
+    Recycle_layout->addWidget(&(tools->widget));
+    task_recycle.append(tools);
+    //当点击重新下载的时候，
+    connect(tools,SIGNAL(reload_Dow(QUrl,QString)),this,);
+
+
+}
+
 //某一个任务下载完后，隐藏与这个任务有关的进度栏等条目。
 /*
 void MainWindow::hideAll(int id){
