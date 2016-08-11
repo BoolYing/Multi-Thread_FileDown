@@ -74,7 +74,10 @@ private:
     int Thread_Finished_Num;
     QVector<Download*> threads;
     QString errorInfo;
-    QMutex *mutex;
+    QMutex *mutex;  //互斥锁指针：下载的文件。
+    //以下两个变量主要是为了调试用.
+    QMutex *lock_for_Count_of_exit_thread;
+    int Count_of_exit_thread;
 
 
     QString FileDir;

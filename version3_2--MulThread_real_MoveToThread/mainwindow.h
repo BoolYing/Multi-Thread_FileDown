@@ -22,6 +22,8 @@
 #include<QFileDialog>
 #include<QDesktopServices>
 #include<string>
+#include<windows.h>
+#include<QMessageBox>
 
 
 namespace Ui {
@@ -75,6 +77,7 @@ public slots:
     void pause();//暂停函数
     void startAgain();//继续下载函数
     void changeStatus();//改变按钮状态功能
+    void stopDownload(); //停止正在下载的任务
  };
 
 //使用pair将一个下载任务的 下载控制器 与 下载状态栏 的对象的指针包装，并存到任务列表中。
@@ -115,7 +118,8 @@ public:
     //保存完成任务的列表
     QVector<FinishedTools*> task_finish;
 
-    bool Space_enough();
+    bool Space_enough(qint64,QString);
+    bool findExistTask(QUrl,QString);
 
     //垃圾箱列表
 

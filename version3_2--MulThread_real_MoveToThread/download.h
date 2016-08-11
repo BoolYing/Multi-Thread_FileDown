@@ -28,7 +28,9 @@ public:
 
     //获取当前下载对象的三个数值：开始节点，已下载量，结束节点
     void getMessage(qint64&,qint64&,qint64&);
+    enum status{waitting_for_download,downloading,stop};
 
+    status stat;
 
 
 private:

@@ -10,16 +10,18 @@ DownloadControl::DownloadControl(QObject *parent,
     Thread_Finished_Num = 0;
     speed = time_left = 0;
     totalSize = readySize = leftSize =0;
-
+    Count_of_exit_thread = 0;
     file = NULL;
     configFile = _configFile;
     url = _url;
     saveFile = _saveFile;  //应该改成 fileName
     FileDir = _FileDir;
+    ThreadNum = 0;
 
-    mutex = new QMutex;
+  //  mutex = new QMutex;
     //初始化当前下载管理器的任务编号.
     TASK_ID = _TASK_ID;
+    lock_for_Count_of_exit_thread = new QMutex;
 
 }
 
@@ -27,6 +29,10 @@ DownloadControl::~DownloadControl(){
     if(mutex){
         delete mutex;
         mutex = NULL;
+    }
+    if(lock_for_Count_of_exit_thread){
+        delete lock_for_Count_of_exit_thread;
+        lock_for_Count_of_exit_thread = NULL;
     }
 }
 
@@ -38,12 +44,16 @@ QString DownloadControl::errorString()
 
 void DownloadControl::DownloadFile(int _ThreadNum)
 {
+    startArray[50] = {0};
+    newArray[50]   = {0} ;
+    endArray[50]   = {0};
     if(file != NULL)
     {
         qDebug()<<" error file";
         return ;
     }
     ThreadNum = _ThreadNum;
+    mutex = new QMutex;
 
      qDebug()<<"DownloadFile(int)-> ThreadNum :" <<ThreadNum;
      qDebug()<<"DownloadFile(int)-> url       :" <<url.toString();
@@ -97,14 +107,28 @@ void DownloadControl::DownloadFile(int _ThreadNum)
          download->moveToThread(thread);
          thread->start();
 
+         /************/
+         //线程开始，发送信号到download的对象，开始下载任务。
          connect(thread, SIGNAL(started()),download, SLOT(StartDownload()));
+
+         //一个线程的任务下载完成，就会发送停止信号结束线程。
          connect(download,SIGNAL(Finished_Thread()),thread,SLOT(quit()));
-         connect(download,SIGNAL(Finished_Thread()),this,SLOT(SubPartFinished()));
+
+         //一个线程的任务下载完成，调试信息会被输出一下，通知已经结束。
          connect(thread,SIGNAL(finished()),this,SLOT(PrintThreadEnd()));
+
+         //线程结束后，会调用自己的析构函数。
+         connect(thread,SIGNAL(finished()),thread,SLOT(deleteLater()));
+
+         //下载完成，通知下载管理器，进行处理。
+         connect(download,SIGNAL(Finished_Thread()),this,SLOT(SubPartFinished()));
 
          //点击暂停按钮，暂停当前正在下载的任务，保存进度到配置文件。
          connect(this,SIGNAL(pause_Sig()),download,SLOT(Thread_pauseDownload()));
-         //任务被暂停的时候，发送信号结束线程。但是要注意，这时候有些线程可能已经完成了下载任务，已经结束退出。
+
+         //任务被暂停的时候，会发送这个信号结束线程。但是要注意，这时候有些线程可能已经完成了下载任务，已经结束退出。
+         //处理方法：给每一个download的对象加一个状态码，当任务完成，会自动改变状态为“stop”，这时候
+         //download的对象就会不再对 pause_Sig()这个信号做处理。只有处于“downloading”的任务才会对其进行处理。
          connect(download,SIGNAL(quitThread()),thread,SLOT(quit()));
 
          threads.append(download);
@@ -116,11 +140,14 @@ void DownloadControl::DownloadFile(int _ThreadNum)
 }
 
  //通过配置文件继续下载
-void DownloadControl::DownloadFile(void){
-
+void DownloadControl::DownloadFile(void)
+{
+    Count_of_exit_thread = 0;
+    mutex = new QMutex;
     totalSize = GetFileSize(url,3);
     QString fulpath = FileDir+ "/" +saveFile;
     file = new QFile(fulpath);
+    Thread_Finished_Num  = 0;
     qDebug()<<"DownloadFile(void)-> ThreadNum :" <<ThreadNum;
     qDebug()<<"DownloadFile(void)-> url       :" <<url.toString();
     qDebug()<<"DownloadFile(void)-> saveFile  :" <<saveFile;
@@ -161,17 +188,30 @@ void DownloadControl::DownloadFile(void){
          download->moveToThread(thread);
          thread->start();
 
+         //线程开始，发送信号到download的对象，开始下载任务。
          connect(thread, SIGNAL(started()),download, SLOT(StartDownload()));
-         //connect(download,SIGNAL(Finished_Thread()),thread,SLOT(quit()));
+
+         //一个线程的任务下载完，就会发送停止信号停止线程。
+         connect(download,SIGNAL(Finished_Thread()),thread,SLOT(quit()));
+
+         //一个线程的任务下载完，通知下载管理器，进行处理。
          connect(download,SIGNAL(Finished_Thread()),this,SLOT(SubPartFinished()));
+
+         //线程结束，调试信息会被输出一下，通知已经结束。
          connect(thread,SIGNAL(finished()),this,SLOT(PrintThreadEnd()));
+
+         //线程结束后，会调用自己的析构函数。
+         connect(thread,SIGNAL(finished()),thread,SLOT(deleteLater()));
 
          //点击暂停按钮，暂停当前正在下载的任务，保存进度到配置文件。
          connect(this,SIGNAL(pause_Sig()),download,SLOT(Thread_pauseDownload()));
+
          //任务被暂停的时候，发送信号结束线程。但是要注意，这时候有些线程可能已经完成了下载任务，已经结束退出。
+         //处理方法，给每一个download的对象加一个状态码，当任务完成，会自动改变状态为“stop”，这时候
+         //的download就会不再对 pause_Sig()这个信号做处理。只有“downloading”的任务才会对其进行处理。
          connect(download,SIGNAL(quitThread()),thread,SLOT(quit()));
 
-         threads.append(download);
+         threads.append(download);  //将指针追加到线程队列的尾部。
 
      }
      /*****************************************/
@@ -182,7 +222,9 @@ void DownloadControl::DownloadFile(void){
 
 //一个线程下载任务完结的时候，会发送这个信号到 下载控制器，通知自己即将结束。。
 void DownloadControl::PrintThreadEnd(){
-        qDebug()<<"DownloadControl::Print_ThreadEnd()-->Thread is end.";
+        lock_for_Count_of_exit_thread->lock();
+        qDebug()<<"Print_ThreadEnd()-->"<<++Count_of_exit_thread<<" threads  has exit.";
+        lock_for_Count_of_exit_thread->unlock();
 }
 
 /*
@@ -200,6 +242,7 @@ void DownloadControl::pause(){
 
     emit pause_Sig();//发送暂停信号，每一个线程都会接收到它
 
+    file->close();   //统计完毕，关闭文件。
     timer->stop();   //暂停计时器
     //delete timer;
 
@@ -207,11 +250,16 @@ void DownloadControl::pause(){
         threads[i]->getMessage(startArray[i],newArray[i],endArray[i]);
     }               //将每一个线程的具体数据都读取出来，存到数组的相应位置中。
 
-    file->close();  //统计完毕，关闭文件。
-
     for(int i = 0;i<ThreadNum;i++)
         threads[i]->deleteLater();
     threads.clear();
+    //析构互斥锁
+    if(mutex){
+        delete mutex;
+        mutex = NULL;
+    }
+
+
                      //析构所有download对象。
 
     /*********************打开配置文件并写入下载任务的当前状态信息************************/
@@ -264,7 +312,7 @@ void DownloadControl::NetSpeed(){
         str2 = QString::number(time_left,10)+" s";
      }
     else  if(leftSize != 0 ){
-            str2 = "暂无网络.";
+            str2 = "Waiting.";
         }
     qDebug()<<"speed = "<<str1<<"  time  =" <<str2;
 
@@ -285,14 +333,19 @@ void DownloadControl::SubPartFinished()
     //如果完成数等于文件段数，则说明文件下载完毕，关闭文件，发射信号
     if( Thread_Finished_Num == ThreadNum )
     {
-        emit pause_Sig();
-        file->close();
+        file->close();  //关闭文件
+        if(mutex){      //删除互斥锁
+            delete mutex;
+            mutex = NULL;
+        }
         timer->stop();
-        qDebug() << "DownloadControl::SubPartFinished()--> Download finished";
+        qDebug() << "SubPartFinished()-->All Part finished!";
         emit FileDownloadFinished(saveFile,TASK_ID,totalSize,FileDir);
+        /*下载完成会直接隐藏，不需要显示“下载完成”
         QString str1("");
         QString str2("下载完成");
         emit send_Ui_Msg(TASK_ID,saveFile,totalSize,totalSize,str1,str2);
+        */
         //delete this;
         for(int i = 0;i<ThreadNum;i++)
             threads[i]->deleteLater();
@@ -304,6 +357,7 @@ void DownloadControl::SubPartFinished()
             qDebug()<<"pause error!!! some file open error~";
             return;
         }
+        qDebug() << "SubPartFinished()-->All Part finished!!!";
         /****************************************************************/
     }
 }
@@ -340,6 +394,8 @@ qint64 DownloadControl::GetFileSize(QUrl url,int tryTimes)
     }
     return size;
 }
+
+//修改配置文件的内容
 bool DownloadControl::Write_To_ConfigFile(){
 
     QString strAll;
@@ -353,7 +409,8 @@ bool DownloadControl::Write_To_ConfigFile(){
         qDebug()<<"Open file error in Change_ConfigFile() :"<<errorInfo;
         return  false;
     }
-    else{
+    else
+    {
         //打开成功
         QTextStream stream(configFile);
         strAll = stream.readAll();
@@ -381,8 +438,7 @@ bool DownloadControl::Write_To_ConfigFile(){
             }
             else
             {
-                if(strList.at(i).contains(url.toString())&&
-                        strList.at(i+1).contains(FileDir))
+                if((strList.at(i) == url.toString())&&(strList.at(i+1) == FileDir ))
                 {//如果匹配到了url与目标路径都符合的条目，则修改条目下边的内容。
 
 
@@ -392,10 +448,11 @@ bool DownloadControl::Write_To_ConfigFile(){
                     stream<<strList.at(i+1)<<"\n";  //写入路径
 
                     i += 2;//跳转到下下一行，下下一行内容为线程数。
-                    QString tempStr = strList.at(i);//读取线程数存到字符串
+                    //若为一个新任务的第一次暂停，则这个时候配置文件中的线程数是乱码，这意味着
+                    QString tempStr = QString::number(ThreadNum);//将线程数存到字符串
                     stream<<tempStr<<"\n";
                     int Thread_Num = tempStr.toInt();//转换为整数int
-                    for(int j = 0;j<Thread_Num;j++)
+                    for(int j = 0;j<ThreadNum;j++)
                     {
                         stream << startArray[j]<<"\n";
                         stream << newArray[j]<<"\n";

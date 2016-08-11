@@ -328,20 +328,32 @@ void FinishedTools::RemoveFiles(){
 void MainWindow::on_pushButton_clicked()
 {
 
-
     QUrl url= ui->lineEdit->text();
     QFileInfo info(url.path());
-
-    QString dir = QFileDialog::getExistingDirectory(this);
-
+    QString dir = QFileDialog::getExistingDirectory();
     qDebug()<< "path :"<<dir;
     QString fileName(info.fileName());
 
+
+    if(findExistTask(url,dir) == true){ //如果存在重复任务，则拒绝下载。
+        qDebug()<<"This task is exist,dont need to download .";
+        QMessageBox::warning(this,tr("提示"),tr(" \n 任务已经存在，无需下载\n"),QMessageBox::Yes);
+        return ;
+    }
+
+    qint64 totalSize = GetFileSize(url,3);
+    bool DiskSpace = Space_enough(totalSize,dir);
+    if(DiskSpace == false){
+        qDebug()<<"Disk Space is not enough !";
+        QMessageBox::warning(this,tr("提示"),tr(" \n 硬盘空间不足\n"),QMessageBox::Yes);
+        return ;
+    }
 
 
 
     //任务编号，Task_ID,从0开始编号，每增加一个任务，编号+1 .
     dow = new DownloadControl(this,Task_ID,configFile,url,fileName,dir);
+    dow->Write_To_ConfigFile(); //先在配置文件中声明自己已经存在。
 
     //把新任务的下载管理器指针与状态栏指针都保存到一个pair对象中。
     pair.first = dow;
@@ -356,6 +368,7 @@ void MainWindow::on_pushButton_clicked()
 
     //开启下载管理器，启用五个线程进行下载
     dow->DownloadFile(5);
+
 
     //下载管理器完成任务，发送信号表示已完成文件的下载
     connect(dow,SIGNAL(FileDownloadFinished(QString,int,qint64,QString)),
@@ -494,9 +507,9 @@ qint64 MainWindow::GetFileSize(QUrl url, int tryTimes){
     }
     return size;
 }
-bool MainWindow::Space_enough()
+bool MainWindow::Space_enough( qint64 totalSize,QString dir)
 {
- /*   std::string path=_fileName.toStdString();
+    std::string path = dir.toStdString();
     std::string rootName(path.begin(),path.begin()+3);
     QString name(rootName.c_str());
 
@@ -508,9 +521,40 @@ bool MainWindow::Space_enough()
            return 0;
     }
     qDebug()<<"freespace:"<<(quint64)liTotalFreeBytes.QuadPart<<endl;
-    return (quint64)liTotalFreeBytes.QuadPart / (quint64)_fileSize;   //返回0无空间  返回1有空间
-    */
+    return (quint64)liTotalFreeBytes.QuadPart / totalSize;   //返回0无空间  返回1有空间
 
-    return true;
 }
+bool MainWindow::findExistTask(QUrl _url,QString _fileDir){
 
+    QString strAll;
+    QStringList strList;
+    if(configFile == NULL){
+        qDebug()<<"configFile is NULL!  open error~";
+        return  false;
+    }
+    if(!configFile->open(QFile::ReadOnly|QFile::Text))//打开配置文件,读取所有信息到 缓冲字符串strAll
+    {
+        QString errorInfo =configFile->errorString();
+        configFile->close();
+        configFile = NULL;
+        qDebug()<<"Open file error in Change_ConfigFile() :"<<errorInfo;
+        return  false;
+    }
+    else{
+        QTextStream stream(configFile);
+        strAll = stream.readAll();
+        //读取完关闭文件，因为信息已经被保存到了变量中
+        configFile->close();
+    }
+    strList = strAll.split("\n");
+    for(int i =0;i<strList.count();i++)
+    {
+        if((strList.at(i) == _url.toString())&&(strList.at(i+1) == _fileDir))
+        {
+            return true;
+
+        }
+    }
+    return false;
+
+}
