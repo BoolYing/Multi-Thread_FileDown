@@ -56,14 +56,14 @@ class ProgressTools:public QObject {
 public:
     ProgressTools(QObject *parent = 0,int task_id = 0,DownloadControl * _dow = 0);
     QWidget widget;
-    int task_ID;
+    int task_ID;   
     DownloadControl * dow;
     QLabel filename ;
     QProgressBar bar ;
     QLabel  speed;
     QLabel lefttime;
     QPushButton pauseDownload;
-    QPushButton stopDownload;
+    QPushButton stopDownloadButton;
     QHBoxLayout  d_layout;
     QHBoxLayout  f_layout;
     QHBoxLayout  t_layout;
@@ -71,12 +71,13 @@ public:
 signals:
     void pause_signal();//暂停下载信号
     void startAgain_signal();//继续下载信号
+    void moveToRecycle(QUrl _url,QString _dir,QString _filename,qint64 _totalsize);
 
 public slots:
     void pause();//暂停函数
     void startAgain();//继续下载函数
     void changeStatus();//改变按钮状态功能
-   // void stopDownload(); //停止正在下载的任务
+    void stopDownload(); //停止正在下载的任务
  };
 
 //使用pair将一个下载任务的 下载控制器 与 下载状态栏 的对象的指针包装，并存到任务列表中。
@@ -113,7 +114,7 @@ public:
     RecycleTools(QObject *parent = 0);
     QUrl url;
     QString file_Name;
-    QString total_size;
+    qint64 total_size;
     QString path;
 
     QWidget widget;
@@ -130,7 +131,8 @@ public slots:
     //当reloadButton被点击时，触发这个槽函数，用来向MainWindow类发送重新下载的信号
     void reloadDownloading();
 
-    void thoroughDestory(QFile *Recycle_configFile);
+   // void thoroughDestory(QFile *Recycle_configFile);
+    void thoroughDestory();
 
 };
 
@@ -173,6 +175,8 @@ private slots:
     void Move_To_Recycle(QUrl,QString,QString,qint64);
     //真正实现重新下载的地方
     void Reload_Downloading(QUrl _url,QString _path);
+    //停止下载
+    void Downloading_To_Recycle(QUrl,QString,QString,qint64);
 
 
 private:

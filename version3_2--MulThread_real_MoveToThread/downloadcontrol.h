@@ -55,16 +55,18 @@ public:
 
     pair_2int64 pair;
     int TASK_ID;
-
+    QUrl url;
+    QString FileDir;
+    qint64 totalSize;
+    QString saveFile;              //文件名
 
 
 
 private:
     //QNetworkAccessManager *manager;
-    qint64 readySize,totalSize,leftSize;
+    qint64 readySize,leftSize;
     qint64 speed,time_left;
-    QUrl url;
-    QString saveFile;            //文件名
+
     int ThreadNum,RunningThread; //线程数量
     QTimer *timer;          //1s的定时测速器
     QTimer *timer_15s;      //超时15s则出现网络异常，则暂停下载。
@@ -81,7 +83,7 @@ private:
     int Count_of_exit_thread;
 
 
-    QString FileDir;
+
 
     qint64 startArray[50];
     qint64 newArray[50];
