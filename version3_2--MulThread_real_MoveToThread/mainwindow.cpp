@@ -288,13 +288,20 @@ void ProgressTools::startAgain(){
 
 }
 void ProgressTools::stopDownload(){
-    dow->pause();
-    dow->DelFrom_ConfigFile();
-
+    qDebug()<<"pause begin!!!!!!!!!!!!!!!!!!!!!!";
     QUrl url = dow->url;
     QString path = dow->FileDir;
     QString filename = dow->saveFile;
     qint64 totalSize = dow->totalSize;
+
+    qDebug()<< url;
+     qDebug()<<path;
+      qDebug()<<filename;
+       qDebug()<<totalSize;
+    dow->pause();
+    dow->DelFrom_ConfigFile();
+    qDebug()<<"pause ok!!!!!!!!!!!!!!!!!!!!!!";
+
 
     QString fulpath;
     fulpath = path +"/"+ filename;
@@ -534,6 +541,8 @@ void MainWindow::on_pushButton_clicked()
     connect(dow,SIGNAL(FileDownloadFinished(QString,int,qint64,QString,QUrl)),
             this,SLOT(TaskFinished(QString,int,qint64,QString,QUrl)));
 
+    connect(pair.second,SIGNAL(moveToRecycle(QUrl,QString,QString,qint64)),
+            this,SLOT(Move_To_Recycle(QUrl,QString,QString,qint64)));
 
 
     //下载管理器通过信号来更新它的状态栏。

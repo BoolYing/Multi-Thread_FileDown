@@ -244,6 +244,7 @@ void DownloadControl::pause(){
     timer->stop();   //暂停计时器
     //delete timer;
 
+    qDebug()<<"question--1 !!!!!!";
     for(int i =0;i<ThreadNum;i++){
         threads[i]->getMessage(startArray[i],newArray[i],endArray[i]);
     }               //将每一个线程的具体数据都读取出来，存到数组的相应位置中。
