@@ -32,8 +32,10 @@ public:
                      QString dir);
      ~DownloadControl();
 
+     //当前下载控制器的状态，暂停或正在下载。
+
      //开始下载
-    void  DownloadFile(int _ThreadNum);
+     void  DownloadFile(int _ThreadNum);
 
     //通过配置文件继续下载
     void DownloadFile(void);
@@ -59,7 +61,6 @@ public:
     QString FileDir;
     qint64 totalSize;
     QString saveFile;              //文件名
-
 
 
 private:

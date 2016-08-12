@@ -233,6 +233,7 @@ ProgressTools::ProgressTools(QObject *parent,int task_id,DownloadControl *_dow):
     task_ID = task_id;
     status = 0;
     dow = _dow;
+    st = downloaing;
     //_window = parent;
     pauseDownload.setText("暂停下载");
     stopDownloadButton.setText("停止");
@@ -269,7 +270,7 @@ ProgressTools::ProgressTools(QObject *parent,int task_id,DownloadControl *_dow):
 void ProgressTools::changeStatus(){
     if(status == 0){
         emit pause_signal();
-        status = 1;
+        status = 1;      
         }
     else{
         emit startAgain_signal();
@@ -278,37 +279,52 @@ void ProgressTools::changeStatus(){
 }
 //暂停下载
 void ProgressTools::pause(){
+    st = pausing;
     this->pauseDownload.setText("继续下载");
     dow->pause();
 }
 //继续下载
 void ProgressTools::startAgain(){
+    st = downloaing;
     this->pauseDownload.setText("暂停下载");
     dow->startAgain();
 
 }
 void ProgressTools::stopDownload(){
-    qDebug()<<"pause begin!!!!!!!!!!!!!!!!!!!!!!";
     QUrl url = dow->url;
     QString path = dow->FileDir;
     QString filename = dow->saveFile;
     qint64 totalSize = dow->totalSize;
+    if (st == downloaing){ //若为0，说明是正在下载中，直接点击的停止
+        qDebug()<<"pause begin!!!!!!!!!!!!!!!!!!!!!!";
+        qDebug()<< url;
+        qDebug()<<path;
+        qDebug()<<filename;
+        qDebug()<<totalSize;
+        dow->pause();
+        dow->DelFrom_ConfigFile();
+        qDebug()<<"pause ok!!!!!!!!!!!!!!!!!!!!!!";
 
-    qDebug()<< url;
-     qDebug()<<path;
-      qDebug()<<filename;
-       qDebug()<<totalSize;
-    dow->pause();
-    dow->DelFrom_ConfigFile();
-    qDebug()<<"pause ok!!!!!!!!!!!!!!!!!!!!!!";
 
+        QString fulpath;
+        fulpath = path +"/"+ filename;
+        QFile::remove(fulpath);//刪除文件
 
-    QString fulpath;
-    fulpath = path +"/"+ filename;
-    QFile::remove(fulpath);//刪除文件
+        emit moveToRecycle(url,path,filename,totalSize);
+        widget.hide();
+    }
+    else{
+        dow->DelFrom_ConfigFile();
 
-    emit moveToRecycle(url,path,filename,totalSize);
-    widget.hide();
+        QString fulpath;
+        fulpath = path +"/"+ filename;
+        QFile::remove(fulpath);//刪除文件
+
+        emit moveToRecycle(url,path,filename,totalSize);
+        widget.hide();
+
+    }
+
 }
 
 
@@ -509,13 +525,16 @@ void MainWindow::on_pushButton_clicked()
 
     //判断磁盘空间是否足够
     qint64 totalSize = GetFileSize(url,3);
+    if (totalSize == -1){
+        QMessageBox::warning(this,tr("提示"),tr(" \n兄弟，Url有毒啊\n"),QMessageBox::Yes);
+        return;
+    }
     bool DiskSpace = Space_enough(totalSize,dir);
     if(DiskSpace == false){
         qDebug()<<"Disk Space is not enough !";
         QMessageBox::warning(this,tr("提示"),tr(" \n 硬盘空间不足\n"),QMessageBox::Yes);
         return ;
     }
-
 
 
     //任务编号，Task_ID,从0开始编号，每增加一个任务，编号+1 .

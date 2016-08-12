@@ -244,7 +244,6 @@ void DownloadControl::pause(){
     timer->stop();   //暂停计时器
     //delete timer;
 
-    qDebug()<<"question--1 !!!!!!";
     for(int i =0;i<ThreadNum;i++){
         threads[i]->getMessage(startArray[i],newArray[i],endArray[i]);
     }               //将每一个线程的具体数据都读取出来，存到数组的相应位置中。
@@ -319,7 +318,6 @@ void DownloadControl::NetSpeed(){
     //每一个任务都有一个相对应的进度栏，包括进度条，文件名，下载速度，剩余时间等。
     //这个信号用来更新任务对应的进度栏。
     emit send_Ui_Msg(TASK_ID,saveFile,totalSize-leftSize,totalSize,str1,str2);
-
 
 }
 

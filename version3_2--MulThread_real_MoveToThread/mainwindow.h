@@ -68,6 +68,8 @@ public:
     QHBoxLayout  f_layout;
     QHBoxLayout  t_layout;
     int status; //按钮状态
+    enum Downloading_status{downloaing,pausing};
+    Downloading_status st;
 signals:
     void pause_signal();//暂停下载信号
     void startAgain_signal();//继续下载信号
