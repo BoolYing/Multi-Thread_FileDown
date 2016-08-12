@@ -251,6 +251,7 @@ void DownloadControl::pause(){
 
     for(int i = 0;i<ThreadNum;i++)
         threads[i]->deleteLater();
+
     threads.clear();
     //析构互斥锁
     if(mutex){
@@ -346,8 +347,10 @@ void DownloadControl::SubPartFinished()
         emit send_Ui_Msg(TASK_ID,saveFile,totalSize,totalSize,str1,str2);
         */
         //delete this;
+
         for(int i = 0;i<ThreadNum;i++)
             threads[i]->deleteLater();
+
         threads.clear();
 
         /*****************删除配置文件中与此任务相关的信息********************/
